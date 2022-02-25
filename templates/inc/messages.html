@@ -1,0 +1,16 @@
+{% if messages %}
+{% for message in messages %}
+<div class="toast border-0" data-bs-delay="10000">
+<div class="toast-container position-absolute p-4 bottom-0 start-50 translate-middle-x border-0" id="toastPlacement">
+  <div class="toast align-items-center border-0 rounded-0 text-white bg-{{ message.tags }}" style='width:540px !important'>
+    <div class="d-flex">
+    <div class="toast-body">
+      {{ message }}
+    </div>
+    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+  </div>
+  </div>
+</div>
+</div>
+{% endfor %}
+{% endif %}

@@ -1,0 +1,50 @@
+{% extends 'accounts/registration/dashboard/dashboard_base.html' %}
+
+{% block dashboard_navbar %}
+<li class="list-group-item border-0 ">
+    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-dark shadow-0 w-100 rounded-0"><i
+            class="bi bi-person"></i> Edit Profile</a>
+</li>
+<li class="list-group-item border-0">
+    <a href="{% url 'accounts:downloads_all' %}" class="btn btn-light shadow-0 w-100 rounded-0"><i class="bi bi-cloud-arrow-down"></i> Downloads</a>
+</li>
+{% endblock dashboard_navbar %}
+
+{% block dashboard_info %}
+{% if request.user.is_active == False %}
+<div class="alert alert-danger" role="alert">
+    Account is not active, An account activation link has been sent to your mailbox, please confirm that.
+</div>
+{% endif %}
+<div class="mb-4 row">
+    <div class="col-sm-2">
+        {% if request.user.image %}
+        <img src="{{request.user.image.url}}" alt="" class="img-fluid shadow-sm">
+        {% else %}
+        <div class='d-flex justify-content-center'><i class="bi bi-person-bounding-box display-1"></i></div>
+        {% endif %}
+    </div>
+    <div class="col-sm-10">
+        <h6 class="fs-4">{{request.user.full_name}}</h6>
+        <h6 class="fs-6">{{request.user.email}}</h6>
+    </div>
+</div>
+<hr>
+<form action="" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ profile_form.non_field_errors }}
+    <div class="mb-3 row">
+        {{ profile_form.full_name.errors }}
+        <label for="{{ profile_form.full_name.id_for_label }}" class="col-sm-2 col-form-label">Full Name:</label>
+        <div class="col-sm-10">
+            {{ profile_form.full_name }}
+        </div>
+        {{ profile_form.image.errors }}
+        <label for="{{ profile_form.image.id_for_label }}" class="col-sm-2 col-form-label">Image:</label>
+        <div class="col-sm-10">
+            {{ profile_form.image }}
+        </div>
+    </div>
+    <input type="submit" value="Submit" class="btn btn-dark rounded-0">
+</form>
+{% endblock dashboard_info %}

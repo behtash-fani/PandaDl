@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="cover-container d-flex h-100 p-3 mx-auto flex-column mt-4">
+    <div class="row mb-3">
+        <h1 class='text-center align-middle'><i class="bi bi-youtube"></i> Youtube Downloader</h1>
+        <h5 class='text-center text-muted'>Please copy and paste your desired video link to get video info</h5>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="card col-sm-12 col-md-9 col-lg-7 col-xl-7 mx-auto border-0 rounded-0 shadow p-3 mt-3">
+                <form action="" method='post'>
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    <div class="form-floating mb-1">
+                        {{ form.subject.errors }}
+                        {{ form.link_field }}
+                        <label for="floatingInput">Youtube URL</label>
+                    </div>
+                    <button type="submit" class="btn btn-dark mt-3 text-center rounded-0"><svg
+                            xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send"
+                            viewBox="0 0 16 16">
+                            <path
+                                d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z" />
+                        </svg> Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

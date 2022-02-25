@@ -1,0 +1,22 @@
+{% load static %}
+
+<nav class="navbar navbar-expand-lg navbar-light mb-auto" style="background: transparent !important;">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'home:index' %}"><img src="{% static 'image/main_logo.png' %}" class="img-fluid" alt="" width="256"></a>
+    <ul class="navbar-nav">
+      {% if request.user.is_authenticated %}
+      <li class="nav-item">
+        <a class="nav-link btn btn-dark text-white rounded-0" href="{% url 'accounts:edit_profile' %}"><i class="bi bi-person"></i> {{request.user.full_name}}</a>
+      </li>
+      </a>
+      {% else %}
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'accounts:user_login' %}"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'accounts:user_register' %}"><i class="bi bi-person-plus"></i> Register</a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+</nav>

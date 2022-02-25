@@ -1,0 +1,11 @@
+{% autoescape off %}
+Welecome to PandaDL
+
+Hello {{full_name}}
+
+Please confirm your email by clicking on the following link.
+
+Confirmation Link: http://{{ domain }}{% url 'accounts:user_activate' uidb64=uid token=token %}
+
+
+{% endautoescape %}

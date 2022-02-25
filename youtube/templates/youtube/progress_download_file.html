@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block content %}
+<div class="d-flex h-100 p-3 mx-auto flex-column mt-4">
+    <div class="row mb-1">
+        <h1 class='text-center align-middle'><i class="bi bi-youtube"></i> Youtube Downloader</h1>
+        <input type="hidden" name="url-key" data-url-key={{url_key}} id="url-key">
+        <input type="hidden" name="url-type" data-file-type={{file_type}} id="file-type">
+    </div>
+    <div class="row">
+        <div class="card col-sm-12 col-md-9 col-lg-7 col-xl-7 mx-auto border-0 shadow rounded p-1 mt-3">
+            <div class="card-body">
+                <img src="{% static 'image/please_wait.gif' %}" alt="" class="img-fluid">
+                <div class='mt-2 text-center border-0 shadow-sm p-3' style='background:#d1e7dd;color:#0f5132'>
+                <h5>
+                    <div class="spinner-grow spinner-grow-sm text-success" role="status" style="width: 1.2rem; height: 1.2rem;">
+                        <span class="visually-hidden">Loading...</span>
+                      </div> Please wait for downloading the desired file
+                </h5>
+                <small>This may take a few minutes </small>
+            </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block script %}
+<script>
+    let url_key = document.getElementById('url-key').getAttribute("data-url-key")
+    let file_type = document.getElementById('file-type').getAttribute("data-file-type")
+    setInterval(get_dl_status, 1000);
+    function get_dl_status() {
+        let url = "{% url 'youtube:check_dl_status_task' url_key %}"
+        let fetchRes = fetch(url);
+        fetchRes.then(response => response.json()).then(status => {
+            if (status["dl_task_status"] == "SUCCESS"){
+                if (file_type == "single_video"){
+                    let next_url = "{% url 'accounts:downloads_single_videos' %}";
+                    document.location.href = next_url;
+                }
+                else if (file_type == "audio"){
+                    let next_url = "{% url 'accounts:downloads_audios' %}";
+                    document.location.href = next_url;
+                }
+                else if (file_type == "playlist_video"){
+                    let next_url = "{% url 'accounts:downloads_playlists' %}";
+                    document.location.href = next_url;
+                }
+            }
+        })
+    }
+</script>
+{% endblock script %}
