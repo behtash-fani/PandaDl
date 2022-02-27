@@ -46,6 +46,10 @@ class EditProfileForm(forms.ModelForm):
     full_name = forms.CharField(widget=forms.TextInput(attrs={"class": "form-control rounded-0 mb-3",}))
     image = forms.ImageField(widget=forms.FileInput(attrs={"class": "form-control rounded-0 mb-3",}))
 
+    def __init__(self, *args, **kwargs):
+        super(EditProfileForm, self).__init__(*args, **kwargs)
+        self.fields['image'].required = False
+
     class Meta:
         model = User
         fields = ("full_name", "image",)
