@@ -53,9 +53,6 @@ class EditProfileForm(forms.ModelForm):
 class PasswordChangeForm(forms.Form):
     email = forms.EmailField(widget=forms.EmailInput(attrs={"class": "form-control rounded-0","id": "floatingInput","placeholder": "Email"}))
 
-    # class Meta:
-    #     model = User
-    #     fields = ("email",)
 
 class GetRestPasswordForm(forms.ModelForm):
     password1 = forms.CharField(widget=forms.PasswordInput(attrs={"class": "form-control rounded-0","id": "floatingInput","placeholder": "Password",}))

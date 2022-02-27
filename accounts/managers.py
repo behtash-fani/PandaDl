@@ -2,7 +2,7 @@ from django.contrib.auth.models import BaseUserManager
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, full_name, password1=None, password2=None):
+    def create_user(self, email, full_name, password=None):
         if not email:
             raise ValueError("Users must have an email address")
         if not full_name:
@@ -13,14 +13,13 @@ class UserManager(BaseUserManager):
             full_name=full_name,
         )
 
-        user.set_password(password1)
-        user.set_password(password2)
+        user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, full_name, password=None, **other_fields):
+    def create_superuser(self, email, full_name, password=None):
         user = self.create_user(email,password=password,full_name=full_name)
-        other_fields.setdefault('is_admin', True)
-        other_fields.setdefault('is_active', True)
+        user.is_admin = True
+        user.is_active = True
         user.save(using=self._db)
         return user

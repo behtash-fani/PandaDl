@@ -59,11 +59,7 @@ def user_register(request):
 
         if form.is_valid():
             cd = form.cleaned_data
-            # if User.objects.filter(email=cd["email"]):
-            #     messages.error(request, "this email already exist! please try some other email or send reqeust for reset your password", "warning")
-            user = User.objects.create_user(
-                cd["email"], cd["full_name"], cd["password1"], cd["password2"]
-            )
+            user = User.objects.create_user(cd["email"], cd["full_name"], cd["password1"])
             messages.success(
                 request,
                 "Your Account has been successfully created. We have sent you a confirmation email, please confirm your email in order to activate your account.",
