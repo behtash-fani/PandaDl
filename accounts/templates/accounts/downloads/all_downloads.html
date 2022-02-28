@@ -1,0 +1,95 @@
+{% extends 'accounts/registration/dashboard/dashboard_base.html' %}
+
+
+{% block dashboard_navbar %}
+<li class="list-group-item border-0">
+    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-light shadow-0 w-100 rounded-0"><i
+            class="bi bi-person"></i> Edit Profile</a>
+</li>
+<li class="list-group-item border-0">
+    <a href="{% url 'accounts:downloads_all' %}" class="btn btn-dark shadow-0 w-100 rounded-0"><i
+            class="bi bi-cloud-arrow-down"></i> Downloads</a>
+</li>
+{% endblock dashboard_navbar %}
+
+{% block dashboard_info %}
+<div class="row mb-3">
+    <h1 class='text-center align-middle'><i class="bi bi-youtube"></i> Youtube Downloader</h1>
+</div>
+<div class="mb-1 mt-4 mx-auto">
+    <a class="btn btn-light rounded-0 shadow" href="{% url 'accounts:downloads_all' %}"><i class="bi bi-layers"></i>
+        All</a>
+    <a class="btn btn-outline-dark rounded-0" href="{% url 'accounts:downloads_audios' %}"><i
+            class="bi bi-file-music"></i>
+        Audios</a>
+    <a class="btn btn-outline-dark rounded-0" href="{% url 'accounts:downloads_single_videos' %}"><i
+            class="bi bi-camera-video"></i> Single Videos</a>
+    <a class="btn btn-outline-dark rounded-0" href="{% url 'accounts:downloads_playlists' %}"><i
+            class="bi bi-collection-play"></i> Playlists</a>
+</div>
+<div class="mx-auto border-0 rounded-0 rounded p-3 mt-3">
+    <div class="row g-0">
+        {% if all_file_downloaded %}
+        <table class="table h-100 justify-content-center align-items-center">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-center" style="width: 2%">Type</th>
+                    <th scope="col" class="text-center" style="width: 15%">Thumbnail</th>
+                    <th scope="col" class="text-center" style="width: 20%">Title</th>
+                    <th scope="col" class="text-center" style="width: 5%">Format</th>
+                    <th scope="col" class="text-center" style="width: 15%">Time Expiration</th>
+                    <th scope="col" class="text-center" style="width: 15%">Download</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for file in all_file_downloaded %}
+                {% if file.video_is_downloaded %}
+                <tr>
+                    {% if file.is_playlist %}
+                    <td class="text-center align-middle"><i class="bi bi-collection-play"></i></td>
+                    {% elif file.is_playlist is False %}
+                    <td class="text-center align-middle"><i class="bi bi-camera-video fw-bolder"></i></td>
+                    {% endif %}
+                    <td class="text-center align-middle"><img src="{{file.video_thumb_url}}" alt="" width=96 class="rounded"></td>
+                    <td class="text-center align-middle"><p>{{file.video_title}}</p></td>
+                    <td class="text-center align-middle">{{file.video_downloaded_extension}}</td>
+                    <td class="text-center align-middle">----</td>
+                    <td class="text-center align-middle">
+                        <a class="btn btn-outline-dark rounded-0 shadow"
+                            href="{% url 'accounts:download_file' file.video_id file.video_downloaded_extension %}">
+                            <i class="bi bi-cloud-download"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-dark rounded-0 shadow" disabled><i class="bi bi-arrow-clockwise"></i></a>
+                    </td>
+                </tr>
+                {% endif %}
+                {% if file.audio_is_downloaded %}
+                <tr>
+                    <td class="text-center align-middle"><i class="bi bi-file-music fw-bolder"></i></td>
+                    <td class="text-center align-middle"><img src="{{file.video_thumb_url}}" alt="" width=96 class="rounded"></td>
+                    <td class="text-center align-middle">{{file.video_title}}</td>
+                    <td class="text-center align-middle">{{file.audio_downloaded_format}}</td>
+                    <td class="text-center align-middle">----</td>
+                    <td class="text-center align-middle">
+                        <a class="btn btn-outline-dark rounded-0 shadow"
+                            href="{% url 'accounts:download_file' file.video_id file.audio_downloaded_format %}">
+                            <i class="bi bi-cloud-download"></i>
+                        </a>
+                        <a class="btn btn-outline-dark rounded-0 shadow" href="#"><i class="bi bi-arrow-clockwise" disabled></i></a>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+
+            </tbody>
+        </table>
+        {% else %}
+        <h5 class='text-center mt-3'>You haven't posted a request for downloading audio</h5>
+        <div class='text-center'>
+            <a href="{% url 'youtube:get_link' %}" class="btn btn-primary mt-3">Please Start</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock dashboard_info %}
