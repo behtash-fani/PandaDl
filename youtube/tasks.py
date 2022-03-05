@@ -20,10 +20,9 @@ redis_instance = redis.StrictRedis(host=settings.REDIS_HOST,port=settings.REDIS_
 
 @shared_task()
 def extract_video_info(url_key):
-    # ydl_opts = {
-    #     "proxy": "socks5://127.0.0.1:7890",
-    # }
-    ydl_opts = {}
+    ydl_opts = {
+        "proxy": "socks5://127.0.0.1:7890",
+    }
     url = str(redis_instance.hgetall(url_key)["url"])
     user_email = redis_instance.hgetall(url_key)["user_email"]
     link_list = []
@@ -49,7 +48,11 @@ def extract_video_info(url_key):
                 for imginfo in single_video["thumbnails"]:
                     if "hqdefault.jpg" in imginfo["url"]:
                         url = imginfo["url"]
-                        res = requests.get(url, allow_redirects=True)
+                        proxies = {
+                                "http": "socks5h://127.0.0.1:7890",
+                                "https": "socks5h://127.0.0.1:7890",
+                        }
+                        res = requests.get(url, allow_redirects=True, proxies=proxies)
                         open(f'{videofile_path}/{single_video["id"]}.jpg','wb+').write(res.content)
                         img_url = f'/media/{user_email}/{playlist_id}/{single_video["id"]}/{single_video["id"]}.jpg'
 
@@ -58,6 +61,7 @@ def extract_video_info(url_key):
                         audio_url = f_note["url"]
                         if not os.path.exists(videofile_path + f'/{single_video["id"]}'):
                             ydl_opts = {
+                                "proxy": "socks5://127.0.0.1:7890",
                                 "outtmpl": videofile_path + f'/{single_video["id"]}.mp3',
                                 }
                             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -74,11 +78,11 @@ def extract_video_info(url_key):
                             filesize = size(int(f["filesize"]))
                         elif f["filesize"] == None:
                             video_file_url = f["url"]
-                            # proxies = {
-                            #     "http": "socks5h://127.0.0.1:7890",
-                            #     "https": "socks5h://127.0.0.1:7890",
-                            # }
-                            filesize = size(int(requests.head(video_file_url).headers.get("content-length", 0)))
+                            proxies = {
+                                "http": "socks5h://127.0.0.1:7890",
+                                "https": "socks5h://127.0.0.1:7890",
+                            }
+                            filesize = size(int(requests.head(video_file_url, proxies=proxies).headers.get("content-length", 0)))
                         tmp_info_list.append(filesize)
                         list_format.append(tmp_info_list)
 
@@ -114,6 +118,7 @@ def extract_video_info(url_key):
                     audio_url = f_note["url"]
                     if not os.path.exists(single_video_dir + f'{video_info["id"]}'):
                         ydl_opts = {
+                            "proxy": "socks5://127.0.0.1:7890",
                             "outtmpl": single_video_dir + f'{video_info["id"]}.mp3',
                             }
                         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -138,11 +143,11 @@ def extract_video_info(url_key):
                         filesize = size(int(f["filesize"]))
                     elif f["filesize"] == None:
                         video_file_url = f["url"]
-                        # proxies = {
-                        #     "http": "socks5h://127.0.0.1:7890",
-                        #     "https": "socks5h://127.0.0.1:7890",
-                        # }
-                        filesize = size(int(requests.head(video_file_url,).headers.get("content-length", 0)))
+                        proxies = {
+                            "http": "socks5h://127.0.0.1:7890",
+                            "https": "socks5h://127.0.0.1:7890",
+                        }
+                        filesize = size(int(requests.head(video_file_url,proxies=proxies).headers.get("content-length", 0)))
                     tmp_info_list.append(filesize)
                     list_format.append(tmp_info_list)
             VideoInfo.objects.create(
@@ -194,7 +199,7 @@ def download_video(self, url_key, format_id):
             )
 
     ydl_opts = {
-        # "proxy": "socks5://127.0.0.1:7890",
+        "proxy": "socks5://127.0.0.1:7890",
         "outtmpl": save_path + "%(id)s-%(format_note)s_noaudio.%(ext)s",
         "format": format_id,
         "progress_hooks": [finished_hook],
@@ -235,7 +240,7 @@ def download_audio(self, url_key, ext, quality):
             )
 
     ydl_opts = {
-        # "proxy": "socks5://127.0.0.1:7890",
+        "proxy": "socks5://127.0.0.1:7890",
         "outtmpl": save_path + "%(id)s-" + quality + ".%(ext)s",
         "format": "bestaudio/best",
         "progress_hooks": [finished_hook],
@@ -265,8 +270,8 @@ def download_playlist_video_files(self, url_key, playlist_videos_info):
     user_email = redis_instance.hgetall(url_key)["user_email"]
     for video_info in playlist_videos_info:
         video_id = video_info["video_id"]
-        format_id = video_info["format_id"]
-        format_note = video_info["format_note"]
+        format_id = video_info["video_format_id"]
+        format_note = video_info["video_format_note"]
         save_path = f"./media/{user_email}/{playlist_id}/{video_id}/"
         if VideoInfo.objects.get(video_id=video_id).video_dl_link is not None:
             current_file_path = VideoInfo.objects.get(video_id=video_id).video_dl_link
@@ -296,7 +301,7 @@ def download_playlist_video_files(self, url_key, playlist_videos_info):
                 )
 
         ydl_opts = {
-            # "proxy": "socks5://127.0.0.1:7890",
+            "proxy": "socks5://127.0.0.1:7890",
             "outtmpl": save_path + "%(id)s-%(format_note)s_noaudio.%(ext)s",
             'format': str(format_id),
             "progress_hooks": [finished_hook],
@@ -362,85 +367,3 @@ def check_audio_expired_link(self):
                     audio.audio_remaining_time_url = ""
                     audio.audio_is_downloaded = False
                 audio.save()
-
-
-
-
-
-
-
-
-
-
-
-# @shared_task(bind=True)
-# def waiting_video_file(self, waiting_time, video_id, format_note):
-#     progress_recorder = ProgressRecorder(self)
-#     result = 0
-#     for i in range(waiting_time):
-#         videoinfo = VideoInfo.objects.get(video_id=video_id)
-#         if videoinfo.video_is_downloaded == True:
-#             if videoinfo.video_downloaded_resolution == format_note:
-#                 if videoinfo.video_dl_link is not None:
-#                     current_file_path = videoinfo.video_dl_link
-#                     if os.path.exists(current_file_path):
-#                         break
-#             else:
-#                 if videoinfo.video_dl_link is not None:
-#                     current_file_path = videoinfo.video_dl_link
-#                     if os.path.exists(current_file_path):
-#                         os.remove(current_file_path)
-#         time.sleep(1)
-#         result += i
-#         progress_recorder.set_progress(i + 1, waiting_time)
-#     return "OK"
-
-
-# @shared_task(bind=True)
-# # def waiting_playlist_video_files(self, waiting_time, video_id, format_note):
-# def waiting_playlist_video_files(self, waiting_time, playlist_videos_info):
-#     progress_recorder = ProgressRecorder(self)
-#     result = 0
-#     for i in range(waiting_time):
-#         for videoinfo in playlist_videos_info:
-#             print(videoinfo)
-#         # videoinfo = VideoInfo.objects.get(video_id=video_id)
-#         # if videoinfo.video_is_downloaded == True:
-#         #     if videoinfo.video_downloaded_resolution == format_note:
-#         #         if videoinfo.video_dl_link is not None:
-#         #             current_file_path = videoinfo.video_dl_link
-#         #             if os.path.exists(current_file_path):
-#         #                 break
-#         #     else:
-#         #         if videoinfo.video_dl_link is not None:
-#         #             current_file_path = videoinfo.video_dl_link
-#         #             if os.path.exists(current_file_path):
-#         #                 os.remove(current_file_path)
-#         time.sleep(1)
-#         result += i
-#         progress_recorder.set_progress(i + 1, waiting_time)
-#     return "OK"
-
-
-# @shared_task(bind=True)
-# def waiting_audio_file(self, waiting_time, video_id, ext, quality):
-#     progress_recorder = ProgressRecorder(self)
-#     result = 0
-#     for i in range(waiting_time):
-#         videoinfo = VideoInfo.objects.get(video_id=video_id)
-#         if videoinfo.audio_is_downloaded == True:
-#             break
-#             # if videoinfo.audio_downloaded_format == ext:
-#             #     if videoinfo.audio_dl_link is not None:
-#             #         audio_file_path = videoinfo.audio_dl_link
-#             #         if os.path.exists(audio_file_path):
-#             # break
-#             # else:
-#             #     if videoinfo.audio_dl_link is not None:
-#             #         current_file_path = videoinfo.audio_dl_link
-#             #         if os.path.exists(current_file_path):
-#             #             os.remove(current_file_path)
-#         time.sleep(1)
-#         result += i
-#         progress_recorder.set_progress(i + 1, waiting_time)
-#     return "OK"

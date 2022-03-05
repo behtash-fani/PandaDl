@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from django.http import HttpResponse
 from .tasks import extract_video_info,download_video, download_audio, download_playlist_video_files
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -60,6 +61,7 @@ def yt_download(request, url_key):
     if "&list=" in url or "list=" in url:
         videos_id = redis_instance.hgetall(url_key)["videos_id"]
         videos_id_list = videos_id.split(",")
+        video_num = 0
         videos_id_list.pop()
         for video_id in videos_id_list:
             video_info = VideoInfo.objects.filter(video_id=video_id)
@@ -67,6 +69,8 @@ def yt_download(request, url_key):
                 for item in video_info[1:]:
                     item.delete()
         videos_info = VideoInfo.objects.filter(playlist_id=redis_instance.hgetall(url_key)["playlist_id"])
+        # print(redis_instance.hgetall(url_key))
+
         context = {"url_key": url_key, "videos_info": videos_info}
 
     # when sent single video url for downloading 
@@ -76,7 +80,7 @@ def yt_download(request, url_key):
         if len(video_info) > 1:
             for item in video_info[1:]:
                 item.delete()
-        context = {"url_key": url_key, "video_info": video_info[0]}        
+        context = {"url_key": url_key, "video_info": video_info[0]} 
 
     return render(request, "youtube/show_info_download.html", context)
 
@@ -105,6 +109,7 @@ def download_audio_progress(request, ext, quality, url_key):
 
 def download_playlist_video(request, url_key):
     playlist_videos_info = request.COOKIES[url_key]
+    print(playlist_videos_info)
     playlist_videos_info = ast.literal_eval(playlist_videos_info)
     download_playlist_video_result = download_playlist_video_files.delay(url_key, playlist_videos_info)
     task_id = download_playlist_video_result.task_id
