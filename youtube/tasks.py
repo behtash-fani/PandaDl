@@ -20,13 +20,12 @@ redis_instance = redis.StrictRedis(host=settings.REDIS_HOST,port=settings.REDIS_
 
 @shared_task()
 def extract_video_info(url_key):
-    # ydl_opts = {
-    #     "proxy": "socks5://127.0.0.1:7890",
-    # }
-    ydl_opts = {}
+    ydl_opts = {
+        "proxy": "socks5://127.0.0.1:7890",
+    }
+    # ydl_opts = {}
     url = str(redis_instance.hgetall(url_key)["url"])
     user_email = redis_instance.hgetall(url_key)["user_email"]
-    link_list = []
     video_id_str = ""
     if "&list=" in url or "list=" in url:
         playlist_url = url
@@ -49,12 +48,12 @@ def extract_video_info(url_key):
                 for imginfo in single_video["thumbnails"]:
                     if "hqdefault.jpg" in imginfo["url"]:
                         url = imginfo["url"]
-                        # proxies = {
-                        #         "http": "socks5h://127.0.0.1:7890",
-                        #         "https": "socks5h://127.0.0.1:7890",
-                        # }
-                        # res = requests.get(url, allow_redirects=True, proxies=proxies)
-                        res = requests.get(url, allow_redirects=True)
+                        proxies = {
+                                "http": "socks5h://127.0.0.1:7890",
+                                "https": "socks5h://127.0.0.1:7890",
+                        }
+                        res = requests.get(url, allow_redirects=True, proxies=proxies)
+                        # res = requests.get(url, allow_redirects=True)
                         open(f'{videofile_path}/{single_video["id"]}.jpg','wb+').write(res.content)
                         img_url = f'/media/{user_email}/{playlist_id}/{single_video["id"]}/{single_video["id"]}.jpg'
 
@@ -63,7 +62,7 @@ def extract_video_info(url_key):
                         audio_url = f_note["url"]
                         if not os.path.exists(videofile_path + f'/{single_video["id"]}'):
                             ydl_opts = {
-                                # "proxy": "socks5://127.0.0.1:7890",
+                                "proxy": "socks5://127.0.0.1:7890",
                                 "outtmpl": videofile_path + f'/{single_video["id"]}.mp3',
                                 }
                             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -80,12 +79,12 @@ def extract_video_info(url_key):
                             filesize = size(int(f["filesize"]))
                         elif f["filesize"] == None:
                             video_file_url = f["url"]
-                            # proxies = {
-                            #     "http": "socks5h://127.0.0.1:7890",
-                            #     "https": "socks5h://127.0.0.1:7890",
-                            # }
-                            # filesize = size(int(requests.head(video_file_url, proxies=proxies).headers.get("content-length", 0)))
-                            filesize = size(int(requests.head(video_file_url).headers.get("content-length", 0)))
+                            proxies = {
+                                "http": "socks5h://127.0.0.1:7890",
+                                "https": "socks5h://127.0.0.1:7890",
+                            }
+                            filesize = size(int(requests.head(video_file_url, proxies=proxies).headers.get("content-length", 0)))
+                            # filesize = size(int(requests.head(video_file_url).headers.get("content-length", 0)))
                         tmp_info_list.append(filesize)
                         list_format.append(tmp_info_list)
 
@@ -121,7 +120,7 @@ def extract_video_info(url_key):
                     audio_url = f_note["url"]
                     if not os.path.exists(single_video_dir + f'{video_info["id"]}'):
                         ydl_opts = {
-                            # "proxy": "socks5://127.0.0.1:7890",
+                            "proxy": "socks5://127.0.0.1:7890",
                             "outtmpl": single_video_dir + f'{video_info["id"]}.mp3',
                             }
                         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -129,7 +128,11 @@ def extract_video_info(url_key):
             for imginfo in video_info["thumbnails"]:
                 if "hqdefault.jpg" in imginfo["url"]:
                     url = imginfo["url"]
-                    res = requests.get(url, allow_redirects=True)
+                    proxies = {
+                            "http": "socks5h://127.0.0.1:7890",
+                            "https": "socks5h://127.0.0.1:7890",
+                    }
+                    res = requests.get(url, allow_redirects=True,proxies=proxies)
                     open(f'{single_video_dir}/{video_info["id"]}.jpg','wb+').write(res.content)
                     img_url = f'/media/{user_email}/{video_info["id"]}/{video_info["id"]}.jpg'
 
@@ -146,12 +149,12 @@ def extract_video_info(url_key):
                         filesize = size(int(f["filesize"]))
                     elif f["filesize"] == None:
                         video_file_url = f["url"]
-                        # proxies = {
-                        #     "http": "socks5h://127.0.0.1:7890",
-                        #     "https": "socks5h://127.0.0.1:7890",
-                        # }
-                        # filesize = size(int(requests.head(video_file_url,proxies=proxies).headers.get("content-length", 0)))
-                        filesize = size(int(requests.head(video_file_url).headers.get("content-length", 0)))
+                        proxies = {
+                            "http": "socks5h://127.0.0.1:7890",
+                            "https": "socks5h://127.0.0.1:7890",
+                        }
+                        filesize = size(int(requests.head(video_file_url,proxies=proxies).headers.get("content-length", 0)))
+                        # filesize = size(int(requests.head(video_file_url).headers.get("content-length", 0)))
                     tmp_info_list.append(filesize)
                     list_format.append(tmp_info_list)
             VideoInfo.objects.create(
@@ -203,7 +206,7 @@ def download_video(self, url_key, format_id):
             )
 
     ydl_opts = {
-        # "proxy": "socks5://127.0.0.1:7890",
+        "proxy": "socks5://127.0.0.1:7890",
         "outtmpl": save_path + "%(id)s-%(format_note)s_noaudio.%(ext)s",
         "format": format_id,
         "progress_hooks": [finished_hook],
@@ -244,7 +247,7 @@ def download_audio(self, url_key, ext, quality):
             )
 
     ydl_opts = {
-        # "proxy": "socks5://127.0.0.1:7890",
+        "proxy": "socks5://127.0.0.1:7890",
         "outtmpl": save_path + "%(id)s-" + quality + ".%(ext)s",
         "format": "bestaudio/best",
         "progress_hooks": [finished_hook],
@@ -305,7 +308,7 @@ def download_playlist_video_files(self, url_key, playlist_videos_info):
                 )
 
         ydl_opts = {
-            # "proxy": "socks5://127.0.0.1:7890",
+            "proxy": "socks5://127.0.0.1:7890",
             "outtmpl": save_path + "%(id)s-%(format_note)s_noaudio.%(ext)s",
             'format': str(format_id),
             "progress_hooks": [finished_hook],
