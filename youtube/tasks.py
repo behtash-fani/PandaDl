@@ -123,9 +123,9 @@ def extract_video_info(url_key):
     elif "?v=" in url and "&list=" not in url:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             video_info = ydl.extract_info(url, download=False)
-            f = open('info_singlevideo.json', 'a+')
-            json.dump(video_info, f)
-            f.close()
+            # f = open('info_singlevideo.json', 'a+')
+            # json.dump(video_info, f)
+            # f.close()
             redis_instance.hmset(url_key, {"video_id": video_info["id"]})
             base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/media/'+f'{user_email}/'
             video_id_path = f'{video_info["id"]}/'
