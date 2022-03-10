@@ -18,7 +18,7 @@ import ffmpeg
 redis_instance = redis.StrictRedis(
     host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0, charset="utf-8", decode_responses=True,)
 
-use_proxy = False
+use_proxy = True
 
 
 @shared_task()
@@ -217,6 +217,14 @@ def dl_audio(url, user_email, video_id):
     else:
         ydl_opts = {
             "outtmpl": single_video_dir + f'{video_id}.mp3',
+            "format": "bestaudio/best",
+            "postprocessors": [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": "128",
+                }
+            ],
         }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.extract_info(url)
@@ -309,7 +317,7 @@ def download_audio(self, url_key, ext, quality):
         ydl_opts = {
             "proxy": "socks5://127.0.0.1:7890",
             "outtmpl": save_path + "%(id)s-" + quality + ".%(ext)s",
-            "format": "bestaudio/best",
+            "format": "22",
             "progress_hooks": [finished_hook],
             "postprocessors": [
                 {
