@@ -18,7 +18,7 @@ import ffmpeg
 redis_instance = redis.StrictRedis(
     host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0, charset="utf-8", decode_responses=True,)
 
-use_proxy = True
+use_proxy = False
 
 
 @shared_task()
