@@ -15,15 +15,20 @@ import redis
 import ffmpeg
 
 
-redis_instance = redis.StrictRedis(host=settings.REDIS_HOST,port=settings.REDIS_PORT,db=0,charset="utf-8",decode_responses=True,)
+redis_instance = redis.StrictRedis(
+    host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0, charset="utf-8", decode_responses=True,)
+
+use_proxy = False
 
 
 @shared_task()
 def extract_video_info(url_key):
-    ydl_opts = {
-        "proxy": "socks5://127.0.0.1:7890",
-    }
-    # ydl_opts = {}
+    if use_proxy:
+        ydl_opts = {
+            "proxy": "socks5://127.0.0.1:7890",
+        }
+    else:
+        ydl_opts = {}
     url = str(redis_instance.hgetall(url_key)["url"])
     user_email = redis_instance.hgetall(url_key)["user_email"]
     video_id_str = ""
@@ -37,9 +42,10 @@ def extract_video_info(url_key):
             # f.close()
             playlist_id = video_info["id"]
             playlist_dir = f'{playlist_id}/'
-            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/media/'+f'{user_email}/'
+            base_path = os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))+'/media/'+f'{user_email}/'
             playlist_path = base_path+playlist_dir
-            os.makedirs(playlist_path, exist_ok = True)
+            os.makedirs(playlist_path, exist_ok=True)
             redis_instance.hmset(url_key, {'playlist_id': playlist_id})
             for single_video in video_info["entries"]:
                 videofile_path = playlist_path+single_video["id"]
@@ -48,22 +54,31 @@ def extract_video_info(url_key):
                 for imginfo in single_video["thumbnails"]:
                     if "hqdefault.jpg" in imginfo["url"]:
                         url = imginfo["url"]
-                        proxies = {
+                        if use_proxy:
+                            proxies = {
                                 "http": "socks5h://127.0.0.1:7890",
                                 "https": "socks5h://127.0.0.1:7890",
-                        }
-                        res = requests.get(url, allow_redirects=True, proxies=proxies)
-                        # res = requests.get(url, allow_redirects=True)
-                        open(f'{videofile_path}/{single_video["id"]}.jpg','wb+').write(res.content)
+                            }
+                            res = requests.get(
+                                url, allow_redirects=True, proxies=proxies)
+                        else:
+                            res = requests.get(url, allow_redirects=True)
+                        open(
+                            f'{videofile_path}/{single_video["id"]}.jpg', 'wb+').write(res.content)
                         img_url = f'/media/{user_email}/{playlist_id}/{single_video["id"]}/{single_video["id"]}.jpg'
 
                 for f_note in single_video["formats"]:
                     if f_note["format_note"] == "medium":
                         audio_url = f_note["url"]
                         if not os.path.exists(videofile_path + f'/{single_video["id"]}'):
-                            ydl_opts = {
-                                "proxy": "socks5://127.0.0.1:7890",
-                                "outtmpl": videofile_path + f'/{single_video["id"]}.mp3',
+                            if use_proxy:
+                                ydl_opts = {
+                                    "proxy": "socks5://127.0.0.1:7890",
+                                    "outtmpl": videofile_path + f'/{single_video["id"]}.mp3',
+                                }
+                            else:
+                                ydl_opts = {
+                                    "outtmpl": videofile_path + f'/{single_video["id"]}.mp3',
                                 }
                             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                                 ydl.extract_info(audio_url)
@@ -71,7 +86,7 @@ def extract_video_info(url_key):
                 formats = single_video.get("formats", [single_video])
                 list_format = []
                 for f in formats:
-                    if f["ext"] == "mp4" and f["format_id"] in ["160","133","18","135","22","137","271","313",]:
+                    if f["ext"] == "mp4" and f["format_id"] in ["160", "133", "18", "135", "22", "137", "271", "313", ]:
                         tmp_info_list = []
                         tmp_info_list.append(f["format_id"])
                         tmp_info_list.append(f["format_note"])
@@ -79,12 +94,14 @@ def extract_video_info(url_key):
                             filesize = size(int(f["filesize"]))
                         elif f["filesize"] == None:
                             video_file_url = f["url"]
-                            proxies = {
-                                "http": "socks5h://127.0.0.1:7890",
-                                "https": "socks5h://127.0.0.1:7890",
-                            }
-                            filesize = size(int(requests.head(video_file_url, proxies=proxies).headers.get("content-length", 0)))
-                            # filesize = size(int(requests.head(video_file_url).headers.get("content-length", 0)))
+                            if use_proxy:
+                                proxies = {
+                                    "http": "socks5h://127.0.0.1:7890",
+                                    "https": "socks5h://127.0.0.1:7890",
+                                }
+                                filesize = size(int(requests.head(video_file_url, proxies=proxies).headers.get("content-length", 0)))
+                            else:
+                                filesize = size(int(requests.head(video_file_url).headers.get("content-length", 0)))
                         tmp_info_list.append(filesize)
                         list_format.append(tmp_info_list)
 
@@ -109,39 +126,48 @@ def extract_video_info(url_key):
             # json.dump(video_info, f)
             # f.close()
             redis_instance.hmset(url_key, {"video_id": video_info["id"]})
-            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/media/'+f'{user_email}/'
+            base_path = os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))+'/media/'+f'{user_email}/'
             video_id_path = f'{video_info["id"]}/'
             single_video_dir = base_path+video_id_path
-            os.makedirs(single_video_dir, exist_ok = True)
+            os.makedirs(single_video_dir, exist_ok=True)
             # get image url
-            
+
             for f_note in video_info["formats"]:
                 if f_note["format_note"] == "medium":
                     audio_url = f_note["url"]
                     if not os.path.exists(single_video_dir + f'{video_info["id"]}'):
-                        ydl_opts = {
-                            "proxy": "socks5://127.0.0.1:7890",
-                            "outtmpl": single_video_dir + f'{video_info["id"]}.mp3',
+                        if use_proxy:
+                            ydl_opts = {
+                                "proxy": "socks5://127.0.0.1:7890",
+                                "outtmpl": single_video_dir + f'{video_info["id"]}.mp3',
+                            }
+                        else:
+                            ydl_opts = {
+                                "outtmpl": single_video_dir + f'{video_info["id"]}.mp3',
                             }
                         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                             ydl.extract_info(audio_url)
             for imginfo in video_info["thumbnails"]:
                 if "hqdefault.jpg" in imginfo["url"]:
                     url = imginfo["url"]
-                    proxies = {
+                    if use_proxy:
+                        proxies = {
                             "http": "socks5h://127.0.0.1:7890",
                             "https": "socks5h://127.0.0.1:7890",
-                    }
-                    res = requests.get(url, allow_redirects=True,proxies=proxies)
-                    open(f'{single_video_dir}/{video_info["id"]}.jpg','wb+').write(res.content)
+                        }
+                        res = requests.get(url, allow_redirects=True, proxies=proxies)
+                    else:
+                        res = requests.get(url, allow_redirects=True)
+                    open(f'{single_video_dir}/{video_info["id"]}.jpg', 'wb+').write(res.content)
                     img_url = f'/media/{user_email}/{video_info["id"]}/{video_info["id"]}.jpg'
 
             # get all resolution of mp4 format
             formats = video_info.get("formats", [video_info])
             list_format = []
             for f in formats:
-                
-                if f["ext"] == "mp4" and f["format_id"] in ["160","133","18","135","22","137","271","313",]:
+
+                if f["ext"] == "mp4" and f["format_id"] in ["160", "133", "18", "135", "22", "137", "271", "313", ]:
                     tmp_info_list = []
                     tmp_info_list.append(f["format_id"])
                     tmp_info_list.append(f["format_note"])
@@ -149,12 +175,14 @@ def extract_video_info(url_key):
                         filesize = size(int(f["filesize"]))
                     elif f["filesize"] == None:
                         video_file_url = f["url"]
-                        proxies = {
-                            "http": "socks5h://127.0.0.1:7890",
-                            "https": "socks5h://127.0.0.1:7890",
-                        }
-                        filesize = size(int(requests.head(video_file_url,proxies=proxies).headers.get("content-length", 0)))
-                        # filesize = size(int(requests.head(video_file_url).headers.get("content-length", 0)))
+                        if use_proxy:
+                            proxies = {
+                                "http": "socks5h://127.0.0.1:7890",
+                                "https": "socks5h://127.0.0.1:7890",
+                            }
+                            filesize = size(int(requests.head(video_file_url, proxies=proxies).headers.get("content-length", 0)))
+                        else:
+                            filesize = size(int(requests.head(video_file_url).headers.get("content-length", 0)))
                     tmp_info_list.append(filesize)
                     list_format.append(tmp_info_list)
             VideoInfo.objects.create(
@@ -167,15 +195,18 @@ def extract_video_info(url_key):
 
     return "success"
 ##
-## Start single video downloading process
+# Start single video downloading process
 ##
+
+
 @shared_task(bind=True)
 def download_video(self, url_key, format_id):
     video_id = redis_instance.hgetall(url_key)["video_id"]
     user_email = redis_instance.hgetall(url_key)["user_email"]
     save_path = f"./media/{user_email}/{video_id}/"
     if VideoInfo.objects.get(video_id=video_id).video_dl_link is not None:
-        current_file_path = VideoInfo.objects.get(video_id=video_id).video_dl_link
+        current_file_path = VideoInfo.objects.get(
+            video_id=video_id).video_dl_link
         if os.path.exists(current_file_path):
             os.remove(current_file_path)
 
@@ -185,15 +216,20 @@ def download_video(self, url_key, format_id):
         # f.close()
         if d["status"] == "finished":
             format_note = d["info_dict"]["format_note"]
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            base_dir = os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__)))
             before_filename = f"{video_id}-{format_note}_noaudio.mp4"
-            before_filepath = base_dir + f"/media/{user_email}/{video_id}/" + before_filename
-            audio_path = base_dir + f"/media/{user_email}/{video_id}/" + f"{video_id}.mp3" 
+            before_filepath = base_dir + \
+                f"/media/{user_email}/{video_id}/" + before_filename
+            audio_path = base_dir + \
+                f"/media/{user_email}/{video_id}/" + f"{video_id}.mp3"
             input_video = ffmpeg.input(before_filepath)
             input_audio = ffmpeg.input(audio_path)
-            ffmpeg.concat(input_video, input_audio, v=1, a=1).output(base_dir + f"/media/{user_email}/{video_id}/{video_id}-{format_note}.mp4").run(overwrite_output=True)
+            ffmpeg.concat(input_video, input_audio, v=1, a=1).output(
+                base_dir + f"/media/{user_email}/{video_id}/{video_id}-{format_note}.mp4").run(overwrite_output=True)
             after_filename = f"{video_id}-{format_note}.mp4"
-            after_filepath = base_dir + f"/media/{user_email}/{video_id}/" + after_filename
+            after_filepath = base_dir + \
+                f"/media/{user_email}/{video_id}/" + after_filename
             os.remove(before_filepath)
 
             VideoInfo.objects.filter(video_id=video_id).update(
@@ -204,24 +240,30 @@ def download_video(self, url_key, format_id):
                 video_expiration_time_at=datetime.now() + timedelta(hours=24),
                 video_is_downloaded=True,
             )
-
-    ydl_opts = {
-        "proxy": "socks5://127.0.0.1:7890",
-        "outtmpl": save_path + "%(id)s-%(format_note)s_noaudio.%(ext)s",
-        "format": format_id,
-        "progress_hooks": [finished_hook],
-    }
+    if use_proxy:
+        ydl_opts = {
+            "proxy": "socks5://127.0.0.1:7890",
+            "outtmpl": save_path + "%(id)s-%(format_note)s_noaudio.%(ext)s",
+            "format": format_id,
+            "progress_hooks": [finished_hook],
+        }
+    else:
+        ydl_opts = {
+            "outtmpl": save_path + "%(id)s-%(format_note)s_noaudio.%(ext)s",
+            "format": format_id,
+            "progress_hooks": [finished_hook],
+        }
     url = redis_instance.hgetall(url_key)["url"]
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.extract_info(url)
     return "downloaded"
 ##
-## End single video downloading process
+# End single video downloading process
 ##
 
 
 ##
-## Start audio downloading process
+# Start audio downloading process
 ##
 @shared_task(bind=True)
 def download_audio(self, url_key, ext, quality):
@@ -229,13 +271,15 @@ def download_audio(self, url_key, ext, quality):
     user_email = redis_instance.hgetall(url_key)["user_email"]
     save_path = f"./media/{user_email}/{video_id}/"
     if VideoInfo.objects.get(video_id=video_id).audio_dl_link is not None:
-        current_file_path = VideoInfo.objects.get(video_id=video_id).audio_dl_link
+        current_file_path = VideoInfo.objects.get(
+            video_id=video_id).audio_dl_link
         if os.path.exists(current_file_path):
             os.remove(current_file_path)
 
     def finished_hook(d):
         if d['status'] == 'finished':
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            base_dir = os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__)))
             filename = video_id + "-" + quality + "." + ext
             filepath = base_dir + f"/media/{user_email}/{video_id}/" + filename
             VideoInfo.objects.filter(video_id=video_id).update(
@@ -245,31 +289,45 @@ def download_audio(self, url_key, ext, quality):
                 audio_expiration_time_at=datetime.now() + timedelta(hours=24),
                 audio_is_downloaded=True,
             )
-
-    ydl_opts = {
-        "proxy": "socks5://127.0.0.1:7890",
-        "outtmpl": save_path + "%(id)s-" + quality + ".%(ext)s",
-        "format": "bestaudio/best",
-        "progress_hooks": [finished_hook],
-        "postprocessors": [
-            {
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": ext,
-                "preferredquality": quality,
-            }
-        ],
-    }
+    if use_proxy:
+        ydl_opts = {
+            "proxy": "socks5://127.0.0.1:7890",
+            "outtmpl": save_path + "%(id)s-" + quality + ".%(ext)s",
+            "format": "bestaudio/best",
+            "progress_hooks": [finished_hook],
+            "postprocessors": [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": ext,
+                    "preferredquality": quality,
+                }
+            ],
+        }
+    else:
+        ydl_opts = {
+            "outtmpl": save_path + "%(id)s-" + quality + ".%(ext)s",
+            "format": "bestaudio/best",
+            "progress_hooks": [finished_hook],
+            "postprocessors": [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": ext,
+                    "preferredquality": quality,
+                }
+            ],
+        }
     url = redis_instance.hgetall(url_key)["url"]
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.extract_info(url)
     return "finished"
 ##
-## End audio downloading process
+# End audio downloading process
 ##
 
 ##
-## Start playlist downloading process
+# Start playlist downloading process
 ##
+
 
 @shared_task(bind=True)
 def download_playlist_video_files(self, url_key, playlist_videos_info):
@@ -281,22 +339,31 @@ def download_playlist_video_files(self, url_key, playlist_videos_info):
         format_note = video_info["video_format_note"]
         save_path = f"./media/{user_email}/{playlist_id}/{video_id}/"
         if VideoInfo.objects.get(video_id=video_id).video_dl_link is not None:
-            current_file_path = VideoInfo.objects.get(video_id=video_id).video_dl_link
+            current_file_path = VideoInfo.objects.get(
+                video_id=video_id).video_dl_link
             if os.path.exists(current_file_path):
                 os.remove(current_file_path)
 
         def finished_hook(d):
             if d["status"] == "finished":
                 format_note = d["info_dict"]["format_note"]
-                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                base_dir = os.path.dirname(
+                    os.path.dirname(os.path.abspath(__file__)))
                 before_filename = f"{video_id}-{format_note}_noaudio.mp4"
-                before_filepath = base_dir + f"/media/{user_email}/{playlist_id}/{video_id}/" + before_filename
-                audio_path = base_dir + f"/media/{user_email}/{playlist_id}/{video_id}/" + f"{video_id}.mp3"
+                before_filepath = base_dir + \
+                    f"/media/{user_email}/{playlist_id}/{video_id}/" + \
+                    before_filename
+                audio_path = base_dir + \
+                    f"/media/{user_email}/{playlist_id}/{video_id}/" + \
+                    f"{video_id}.mp3"
                 input_video = ffmpeg.input(before_filepath)
                 input_audio = ffmpeg.input(audio_path)
-                ffmpeg.concat(input_video, input_audio, v=1, a=1).output(base_dir + f"/media/{user_email}/{playlist_id}/{video_id}/{video_id}-{format_note}.mp4").run(overwrite_output=True)
+                ffmpeg.concat(input_video, input_audio, v=1, a=1).output(
+                    base_dir + f"/media/{user_email}/{playlist_id}/{video_id}/{video_id}-{format_note}.mp4").run(overwrite_output=True)
                 after_filename = f"{video_id}-{format_note}.mp4"
-                after_filepath = base_dir + f"/media/{user_email}/{playlist_id}/{video_id}/" + after_filename
+                after_filepath = base_dir + \
+                    f"/media/{user_email}/{playlist_id}/{video_id}/" + \
+                    after_filename
                 os.remove(before_filepath)
                 VideoInfo.objects.filter(video_id=video_id).update(
                     video_dl_link=after_filepath,
@@ -306,19 +373,25 @@ def download_playlist_video_files(self, url_key, playlist_videos_info):
                     video_expiration_time_at=datetime.now() + timedelta(hours=24),
                     video_is_downloaded=True,
                 )
-
-        ydl_opts = {
-            "proxy": "socks5://127.0.0.1:7890",
-            "outtmpl": save_path + "%(id)s-%(format_note)s_noaudio.%(ext)s",
-            'format': str(format_id),
-            "progress_hooks": [finished_hook],
-        }
+        if use_proxy:
+            ydl_opts = {
+                "proxy": "socks5://127.0.0.1:7890",
+                "outtmpl": save_path + "%(id)s-%(format_note)s_noaudio.%(ext)s",
+                'format': str(format_id),
+                "progress_hooks": [finished_hook],
+            }
+        else:
+            ydl_opts = {
+                "outtmpl": save_path + "%(id)s-%(format_note)s_noaudio.%(ext)s",
+                'format': str(format_id),
+                "progress_hooks": [finished_hook],
+            }
         url = f'https://www.youtube.com/watch?v={video_id}'
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.extract_info(url)
     return "downloaded"
 ##
-## End playlist downloading process
+# End playlist downloading process
 ##
 
 
@@ -333,7 +406,8 @@ def check_video_expired_link(self):
                 expiration_time = video.video_expiration_time_at - timezone.now()
                 remaining_time_url = str(expiration_time)
                 print(remaining_time_url)
-                video.video_remaining_time_url = remaining_time_url.split(".")[0]
+                video.video_remaining_time_url = remaining_time_url.split(".")[
+                    0]
                 if expiration_time.total_seconds() <= 0:
                     # remove files from media
                     if video.video_dl_link is not None:
@@ -360,7 +434,8 @@ def check_audio_expired_link(self):
             if audio.audio_expiration_time_at is not None:
                 expiration_time = audio.audio_expiration_time_at - timezone.now()
                 remaining_time_url = str(expiration_time)
-                audio.audio_remaining_time_url = remaining_time_url.split(".")[0]
+                audio.audio_remaining_time_url = remaining_time_url.split(".")[
+                    0]
                 if expiration_time.total_seconds() <= 0:
                     # remove files from media
                     if audio.audio_dl_link is not None:

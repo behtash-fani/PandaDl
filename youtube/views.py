@@ -17,10 +17,6 @@ import ast
 redis_instance = redis.StrictRedis(
     host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0, charset="utf-8", decode_responses=True,)
 
-# download function # page 1
-# @login_required(login_url="accounts:user_login")
-
-
 def get_link(request):
     if not request.user.is_authenticated:
         messages.error(
@@ -73,7 +69,6 @@ def yt_download(request, url_key):
     if "&list=" in url or "list=" in url:
         videos_id = redis_instance.hgetall(url_key)["videos_id"]
         videos_id_list = videos_id.split(",")
-        video_num = 0
         videos_id_list.pop()
         for video_id in videos_id_list:
             video_info = VideoInfo.objects.filter(video_id=video_id)
