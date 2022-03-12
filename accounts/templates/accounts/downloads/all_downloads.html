@@ -1,13 +1,14 @@
 {% extends 'accounts/registration/dashboard/dashboard_base.html' %}
 
+{% block page_title %}{{block.super}} | All files{% endblock page_title %}
 
 {% block dashboard_navbar %}
 <li class="list-group-item border-0">
-    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-light shadow-0 w-100 rounded-0"><i
+    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline-dark shadow w-100 rounded-0"><i
             class="bi bi-person"></i> Edit Profile</a>
 </li>
 <li class="list-group-item border-0">
-    <a href="{% url 'accounts:downloads_all' %}" class="btn btn-dark shadow-0 w-100 rounded-0"><i
+    <a href="{% url 'accounts:downloads_all' %}" class="btn btn-dark shadow w-100 rounded-0"><i
             class="bi bi-cloud-arrow-down"></i> Downloads</a>
 </li>
 {% endblock dashboard_navbar %}
@@ -51,7 +52,7 @@
                     {% elif file.is_playlist is False %}
                     <td class="text-center align-middle"><i class="bi bi-camera-video fw-bolder"></i></td>
                     {% endif %}
-                    <td class="text-center align-middle"><img src="{{file.video_thumb_url}}" alt="" width=96 class="rounded"></td>
+                    <td class="text-center align-middle"><img src="{{file.video_thumb_url}}" alt="" width=96 class="rounded-0 shadow"></td>
                     <td class="text-center align-middle"><p>{{file.video_title}}</p></td>
                     <td class="text-center align-middle">{{file.video_downloaded_extension}}</td>
                     <td class="text-center align-middle">----</td>

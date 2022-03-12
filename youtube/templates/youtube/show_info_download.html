@@ -1,26 +1,36 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block page_title %}{{block.super}} | Link info{% endblock page_title %}
+
 {% block content %}
 <!-- check if link that send to this page is single video -->
+<div class="row mb-1 col-sm-12 col-md-9 col-lg-7 col-xl-10 mx-auto">
+    <h1 class='text-center align-middle'><i class="bi bi-youtube"></i> Youtube Downloader</h1>
+    {% comment %} <h6 class='text-center align-middle'><i class="bi bi-info-square-fill"></i> click on "Get Download
+        Link" to add
+        video file in your account and then you can download it very easily from Pandadl servers</h6> {% endcomment %}
+
+</div>
 {% if video_info %}
 <div class="card col-sm-12 col-md-9 col-lg-7 col-xl-10 mx-auto border-0 rounded-0 shadow rounded p-3 mt-3 rounded-0">
     <div class="row">
         <div class="text-center">
-            <img src="{{ video_info.video_thumb_url }}" class="rounded-0" alt="{{ video_info.video_title }}">
+            <img src="{{ video_info.video_thumb_url }}" class="rounded-0 shadow" alt="{{ video_info.video_title }}">
         </div>
         <div class="card-body">
-            <h5 class="card-title text-center">{{ video_info.video_title }}</h5>
-            <ul class="nav nav-tabs" id="VideoDlLinks" role="tablist">
+            <h5 class="card-title text-center"><i class="bi bi-card-text"></i> {{ video_info.video_title }} <a
+                    href="{{video_info.video_url}}" target="_blank"><i class="bi bi-link link-dark"></i></a></h5>
+            <ul class="nav nav-tabs mt-4" id="VideoDlLinks" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="video-tab" data-bs-toggle="tab" data-bs-target="#video"
-                        type="button" role="tab" aria-controls="video" aria-selected="true">
+                    <button class="nav-link active link-dark rounded-0" id="video-tab" data-bs-toggle="tab"
+                        data-bs-target="#video" type="button" role="tab" aria-controls="video" aria-selected="true">
                         Videos dl links
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="audio-tab" data-bs-toggle="tab" data-bs-target="#audio" type="button"
-                        role="tab" aria-controls="profile" aria-selected="false">
+                    <button class="nav-link link-dark rounded-0" id="audio-tab" data-bs-toggle="tab"
+                        data-bs-target="#audio" type="button" role="tab" aria-controls="profile" aria-selected="false">
                         Audio dl links
                     </button>
                 </li>
@@ -34,7 +44,7 @@
                                 <th scope="col" style="width:10%">Resolution</th>
                                 <th scope="col" style="width:10%">Extention</th>
                                 <th scope="col" style="width:10%">Size</th>
-                                <th scope="col" style="width:10%">Get Download Link</th>
+                                <th scope="col" style="width:20%">Get Download Link</th>
                             </tr>
                         </thead>
                         <tbody class="align-middle text-center">
@@ -46,7 +56,8 @@
                                 <td>{{ video_resolution.2 }}</td>
                                 <td>
                                     <a href="{% url 'youtube:download_video_progress' format_id=video_resolution.0 format_note=video_resolution.1 url_key=url_key %}"
-                                        class="btn btn-primary">Get Download Link</a>
+                                        class="btn btn-outline-dark rounded-0 shadow"><i
+                                            class="bi bi-box-arrow-down"></i> Get Download Link</a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -69,8 +80,9 @@
                                 <td class="align-middle">MP3</td>
                                 <td>128 kbps</td>
                                 <td>
-                                    <a href="{% url 'youtube:download_audio_progress' ext=" mp3" quality="128"
-                                        url_key=url_key %}" class="btn btn-primary">Get Download Link</a>
+                                    <a href="{% url 'youtube:download_audio_progress' ext="mp3" quality="128" url_key=url_key %}"
+                                        class="btn btn-outline-dark rounded-0 shadow"><i
+                                            class="bi bi-box-arrow-down"></i> Get Download Link</a>
                                 </td>
                             </tr>
                             <tr>
@@ -78,16 +90,18 @@
                                 <td>MP3</td>
                                 <td>192 kbps</td>
                                 <td>
-                                    <a href="{% url 'youtube:download_audio_progress' ext=" mp3" quality="192"
-                                        url_key=url_key %}" class="btn btn-primary">Get Download Link</a>
+                                    <a href="{% url 'youtube:download_audio_progress' ext="mp3" quality="192" url_key=url_key %}"
+                                        class="btn btn-outline-dark rounded-0 shadow"><i
+                                            class="bi bi-box-arrow-down"></i>Get Download Link</a>
                                 </td>
                             </tr>
                             <tr>
                                 <th scope="row">3</th>
                                 <td>MP3</td>
                                 <td>320 kbps</td>
-                                <td><a href="{% url 'youtube:download_audio_progress' ext=" mp3" quality="320"
-                                    url_key=url_key %}" class="btn btn-primary">Get Download Link</a>
+                                <td><a href="{% url 'youtube:download_audio_progress' ext="mp3" quality="320" url_key=url_key %}"
+                                        class="btn btn-outline-dark rounded-0 shadow"><i
+                                            class="bi bi-box-arrow-down"></i>Get Download Link</a>
                                 </td>
                             </tr>
                         </tbody>
@@ -102,11 +116,18 @@
 <!-- check if link that send to this page is playlist videos-->
 {% if videos_info %}
 <div
-    class="card col-sm-12 col-md-9 col-lg-7 col-xl-8 mx-auto border-0 rounded-0 shadow rounded mt-1 rounded-0 alert alert-success">
+    class="card col-sm-12 col-md-9 col-lg-7 col-xl-10 mx-auto border-0 rounded-0 shadow rounded mt-1 rounded-0 mb-4 p-4">
     <input type="hidden" value="{{url_key}}" id="url-key">
-    <div class="row">
-        <div class="col"></div>
-        <div class="col"><button class="btn btn-primary" onclick="SendForDownload()">Send For Download</button></div>
+    <div class="row align-items-center">
+        <div class="col-8 align-middle" id='fileadd_count'>0 Video file added</div>
+        <div class="col-4"><button class="btn btn-outline-dark rounded-0 shadow float-end"
+                onclick="SendForDownload()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                    fill="currentColor" class="bi bi-send-plus" viewBox="0 0 16 16">
+                    <path
+                        d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855a.75.75 0 0 0-.124 1.329l4.995 3.178 1.531 2.406a.5.5 0 0 0 .844-.536L6.637 10.07l7.494-7.494-1.895 4.738a.5.5 0 1 0 .928.372l2.8-7Zm-2.54 1.183L5.93 9.363 1.591 6.602l11.833-4.733Z" />
+                    <path
+                        d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-3.5-2a.5.5 0 0 0-.5.5v1h-1a.5.5 0 0 0 0 1h1v1a.5.5 0 0 0 1 0v-1h1a.5.5 0 0 0 0-1h-1v-1a.5.5 0 0 0-.5-.5Z" />
+                </svg> Send For Download</button></div>
     </div>
 </div>
 <div class="card col-sm-12 col-md-9 col-lg-7 col-xl-12 mx-auto border-0 rounded-0 shadow rounded p-4 rounded-0">
@@ -138,13 +159,33 @@
 {% block script %}
 <script>
     let url_key = document.getElementById("url-key").value
-
+    window.onload = function () {
+        let all_cookie = document.cookie.split(';')
+        all_cookie.forEach(function (single_cookie) {
+            if (single_cookie.startsWith('csrftoken')){
+                // console.log(single_cookie)
+            }
+            else{
+                delete_cookie(single_cookie)
+            }
+        })
+    }
+    function CookieCount(){
+        var theCookies = document.cookie.split(';');
+        var aString = '';
+        for (var i = 1 ; i <= theCookies.length; i++) {
+            aString += i + ' ' + theCookies[i-1] + "\n";
+        }
+        console.log(aString)
+        
+    }
     function AddCookie(selectObject) {
         let video_id = $("option:selected", selectObject).attr("data-video-id")
         let video_format_id = $("option:selected", selectObject).attr("data-format-id")
         let video_format_note = $("option:selected", selectObject).attr("data-format-note")
         document.cookie = `${url_key}(${video_id})` +
             `={"video_id":"${video_id}","video_format_id":"${video_format_id}","video_format_note":"${video_format_note}"};path=/`;
+        CookieCount()
     }
 
     function delete_cookie(name) {
@@ -163,22 +204,15 @@
         all_video_info.forEach(function (single_video) {
             single_video = single_video.trim()
             if (single_video.startsWith(`${url_key}`)) {
-                // console.log(single_video)
                 let single_video_cookie = single_video;
                 let value_video_cookie = single_video_cookie.split('=')[1]
                 new_value.push(value_video_cookie);
             }
 
         });
-        // // new_value = JSON.stringify(new_value).replaceAll("\\", "");
         console.log(new_value)
         document.cookie = `${url_key}=${new_value};path=/`
-        // if (document.cookie.match(`${url_key}`)){
-        //     delete_cookie(url_key)
-        // }
-        // else{
-        // }
-        window.location.replace("http://127.0.0.1:8000/youtube/"+ url_key + "/dl-playlist-video/");
+        window.location.replace("http://127.0.0.1:8000/youtube/" + url_key + "/dl-playlist-video/");
     }
 </script>
 {% endblock script %}

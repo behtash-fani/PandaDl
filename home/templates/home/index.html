@@ -5,12 +5,12 @@
 {% block content %}
 <div class="d-flex h-100 p-3 mx-auto flex-column px-3 text-center mt-4">
   <h1 class="mb-1"><strong class="fs-bolder">PandaDL</strong>, BEST method for download</h1>
-  <h4 class="text-muted my-4">We download any videos and audios from SocialMedias and you can easily download them
-    from PandaDL</h4>
+  <h5 class="text-muted my-4">We download any videos and audios from SocialMedias and you can easily download them
+    from PandaDL</h5>
   <hr>
   <div class="row">
     <div class="col">
-      <h3><i class="fab fa-youtube" style="font-size:3em"></i></h3>
+      <h3><a href="{% url 'youtube:get_link' %}" class="link-dark"><i class="fab fa-youtube" style="font-size:3em"></i></a></h3>
       <a href="{% url 'youtube:get_link' %}" class="btn btn-outline-dark rounded-0">Youtube</a>
     </div>
     <div class="col">

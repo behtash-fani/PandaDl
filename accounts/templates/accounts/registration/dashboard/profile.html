@@ -1,12 +1,14 @@
 {% extends 'accounts/registration/dashboard/dashboard_base.html' %}
 
+{% block page_title %}{{block.super}} | Profile{% endblock page_title %}
+
 {% block dashboard_navbar %}
 <li class="list-group-item border-0 ">
-    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-dark shadow-0 w-100 rounded-0"><i
+    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-dark shadow w-100 rounded-0"><i
             class="bi bi-person"></i> Edit Profile</a>
 </li>
 <li class="list-group-item border-0">
-    <a href="{% url 'accounts:downloads_all' %}" class="btn btn-light shadow-0 w-100 rounded-0"><i class="bi bi-cloud-arrow-down"></i> Downloads</a>
+    <a href="{% url 'accounts:downloads_all' %}" class="btn btn-outline-dark rounded-0 shadow w-100"><i class="bi bi-cloud-arrow-down"></i> Downloads</a>
 </li>
 {% endblock dashboard_navbar %}
 
@@ -19,7 +21,7 @@
 <div class="mb-4 row">
     <div class="col-sm-2">
         {% if request.user.image %}
-        <img src="{{request.user.image.url}}" alt="" class="img-fluid shadow-sm">
+        <img src="{{request.user.image.url}}" alt="" class="img-fluid shadow">
         {% else %}
         <div class='d-flex justify-content-center'><i class="bi bi-person-bounding-box display-1"></i></div>
         {% endif %}
@@ -45,6 +47,6 @@
             {{ profile_form.image }}
         </div>
     </div>
-    <input type="submit" value="Submit" class="btn btn-dark rounded-0">
+    <input type="submit" value="Submit" class="btn btn-outline-dark rounded-0 shadow">
 </form>
 {% endblock dashboard_info %}

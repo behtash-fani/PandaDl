@@ -128,6 +128,15 @@ def user_logout(request):
 
 
 def edit_profile(request):
+    user = request.user
+    # check user image is exist or not
+    if User.objects.get(email=user.email) is not None:
+        current_image_path = User.objects.get(email=user.email).image
+        if os.path.exists(f'media/{current_image_path}'):
+            pass
+        else:
+            User.objects.filter(email=user.email).update(image='')
+    # user activation process
     if not request.user.is_active:
         send_confirmation_link(request.user)
     if request.method == "POST":
@@ -137,7 +146,6 @@ def edit_profile(request):
         if profile_form.is_valid():
             profile_form.save()
             messages.success(request, "Your profile information was edited", "success")
-            # messages.success(request, "Your Account has been successfully created. We have sent you a confirmation email, please confirm your email in order to activate your account.", "success")
             return redirect("accounts:edit_profile")
         else:
             messages.error(
