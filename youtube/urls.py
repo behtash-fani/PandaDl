@@ -7,6 +7,7 @@ from django.conf.urls.static import static
 app_name = "youtube"
 urlpatterns = [
     path("get-link/", views.get_link, name="get_link"),
+    path("refresh-link/<str:video_id>/", views.refresh_get_link, name="refresh_get_link"),
     path("<str:url_key>/waiting/",views.initial_getinfo_progress,name="initial_getinfo_progress",),
     path("<str:url_key>/download/", views.yt_download, name="yt_download"),
     path("<str:format_id>/<str:format_note>/<str:url_key>/dl-video/",views.download_video_progress,name="download_video_progress"),

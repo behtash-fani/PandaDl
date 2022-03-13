@@ -19,8 +19,7 @@ redis_instance = redis.StrictRedis(
 
 def get_link(request):
     if not request.user.is_authenticated:
-        messages.error(
-            request, "To download the video from YouTube, please log in to your account or register on the site", 'warning')
+        messages.error(request, "To download the video from YouTube, please log in to your account or register on the site", 'warning')
         return redirect('accounts:user_login')
     url_key = uuid.uuid4().hex[:6].upper()
     if request.method == "POST":
@@ -38,6 +37,13 @@ def get_link(request):
         form = youtube_download_form()
     context = {"form": form}
     return render(request, "youtube/get_link.html", context)
+
+
+def refresh_get_link(request, video_id):
+    url = f'https://www.youtube.com/watch?v={video_id}'
+    url_key = uuid.uuid4().hex[:6].upper()
+    redis_instance.hmset(url_key, {"user_email": request.user.email, "url": url})
+    return redirect('youtube:initial_getinfo_progress', url_key)
 
 
 # page 2 # middle page
