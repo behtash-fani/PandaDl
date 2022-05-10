@@ -4,11 +4,11 @@
 
 {% block dashboard_navbar %}
 <li class="list-group-item border-0">
-    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-light shadow-0 w-100 rounded-0"><i
+    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline-dark w-100 rounded-0"><i
             class="bi bi-person"></i> Edit Profile</a>
 </li>
 <li class="list-group-item border-0">
-    <a href="{% url 'accounts:downloads_all' %}" class="btn btn-dark shadow-0 w-100 rounded-0"><i
+    <a href="{% url 'accounts:downloads_all' %}" class="btn btn-dark w-100 rounded-0"><i
             class="bi bi-cloud-arrow-down"></i> Downloads</a>
 </li>
 {% endblock dashboard_navbar %}
@@ -21,7 +21,7 @@
     <a class="btn btn-outline-dark rounded-0" href="{% url 'accounts:downloads_all' %}"><i class="bi bi-layers"></i> All</a>
     <a class="btn btn-outline-dark rounded-0" href="{% url 'accounts:downloads_audios' %}"><i class="bi bi-file-music"></i> Audios</a>
     <a class="btn btn-outline-dark rounded-0" href="{% url 'accounts:downloads_single_videos' %}"><i class="bi bi-camera-video"></i> Single Videos</a>
-    <a class="btn btn-light rounded-0 shadow" href="{% url 'accounts:downloads_playlists' %}"><i class="bi bi-collection-play"></i> Playlists</a>
+    <a class="btn btn-dark rounded-0 shadow" href="{% url 'accounts:downloads_playlists' %}"><i class="bi bi-collection-play"></i> Playlists</a>
 </div>
 <div class="mx-auto border-0 rounded-0 rounded p-3 mt-3 text-center">
     <div class="row g-0">
@@ -42,18 +42,18 @@
                 {% for video in playlist_video %}
                 <tr>
                     <td class="text-center align-middle"><img src="{{video.video_thumb_url}}" alt="" width=96
-                            class="rounded"></td>
+                            class="rounded-0 shadow"></td>
                     <td class="text-center align-middle">{{video.video_title}}</td>
                     <td class="text-center align-middle">{{video.video_downloaded_resolution}}</td>
                     <td class="text-center align-middle">{{video.video_downloaded_extension}}</td>
                     <td class="text-center align-middle">{{video.video_remaining_time_url}}</td>
                     <td class="text-center align-middle">
-                        <a class="btn btn-outline-dark rounded-0 shadow"
+                        <a class="btn btn-outline-dark rounded-0"
                             href="{% url 'accounts:download_file' video.video_id video.video_downloaded_extension %}">
                             <i class="bi bi-cloud-download"></i>
                         </a>
-                        <a class="btn btn-outline-dark rounded-0 shadow"
-                            href="{% url 'youtube:initial_getinfo_progress' video.video_id %}"><i
+                        <a class="btn btn-outline-dark rounded-0"
+                            href="{% url 'youtube:refresh_get_link' video.video_id %}"><i
                                 class="bi bi-arrow-clockwise"></i></a>
                 </tr>
                 {% endfor %}
@@ -63,7 +63,7 @@
         {% else %}
         <h5 class='text-center mt-3'>You haven't posted a request for downloading video</h5>
         <div class='col-md-12 text-center'>
-            <a href="{% url 'youtube:get_link' %}" class="btn btn-light rounded-0 shadow my-3"><i
+            <a href="{% url 'youtube:get_link' %}" class="btn btn-outline-dark rounded-0 my-3"><i
                     class="bi bi-arrow-right-short"></i> Please Start</a>
         </div>
         {% endif %}

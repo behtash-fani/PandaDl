@@ -102,7 +102,7 @@ def yt_download(request, url_key):
 def download_video_progress(request, format_id, format_note, url_key):
     video_id = redis_instance.hgetall(url_key)["video_id"]
     video_info = VideoInfo.objects.get(video_id=video_id)
-    download_video_result = download_video.delay(url_key, format_id)
+    download_video_result = download_video.delay(url_key, format_id, format_note)
     task_id = download_video_result.task_id
     redis_instance.hmset(url_key, {"dl_task_id": task_id})
     redis_instance.hmset(url_key, {"file_type": "single_video"})

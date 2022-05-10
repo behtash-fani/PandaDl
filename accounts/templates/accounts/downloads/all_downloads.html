@@ -4,11 +4,11 @@
 
 {% block dashboard_navbar %}
 <li class="list-group-item border-0">
-    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline-dark shadow w-100 rounded-0"><i
+    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline-dark w-100 rounded-0"><i
             class="bi bi-person"></i> Edit Profile</a>
 </li>
 <li class="list-group-item border-0">
-    <a href="{% url 'accounts:downloads_all' %}" class="btn btn-dark shadow w-100 rounded-0"><i
+    <a href="{% url 'accounts:downloads_all' %}" class="btn btn-dark w-100 rounded-0"><i
             class="bi bi-cloud-arrow-down"></i> Downloads</a>
 </li>
 {% endblock dashboard_navbar %}
@@ -18,7 +18,7 @@
     <h1 class='text-center align-middle'><i class="bi bi-youtube"></i> Youtube Downloader</h1>
 </div>
 <div class="mb-1 mt-4 mx-auto">
-    <a class="btn btn-light rounded-0 shadow" href="{% url 'accounts:downloads_all' %}"><i class="bi bi-layers"></i>
+    <a class="btn btn-dark rounded-0 shadow" href="{% url 'accounts:downloads_all' %}"><i class="bi bi-layers"></i>
         All</a>
     <a class="btn btn-outline-dark rounded-0" href="{% url 'accounts:downloads_audios' %}"><i
             class="bi bi-file-music"></i>
@@ -52,23 +52,28 @@
                     {% elif file.is_playlist is False %}
                     <td class="text-center align-middle"><i class="bi bi-camera-video fw-bolder"></i></td>
                     {% endif %}
-                    <td class="text-center align-middle"><img src="{{file.video_thumb_url}}" alt="" width=96 class="rounded-0 shadow"></td>
-                    <td class="text-center align-middle"><p>{{file.video_title}}</p></td>
+                    <td class="text-center align-middle"><img src="{{file.video_thumb_url}}" alt="" width=96
+                            class="rounded-0 shadow"></td>
+                    <td class="text-center align-middle">
+                        <p>{{file.video_title}}</p>
+                    </td>
                     <td class="text-center align-middle">{{file.video_downloaded_extension}}</td>
                     <td class="text-center align-middle">----</td>
                     <td class="text-center align-middle">
-                        <a class="btn btn-outline-dark rounded-0 shadow"
+                        <a class="btn btn-outline-dark rounded-0"
                             href="{% url 'accounts:download_file' file.video_id file.video_downloaded_extension %}">
                             <i class="bi bi-cloud-download"></i>
                         </a>
-                        <a href="#" class="btn btn-outline-dark rounded-0 shadow" disabled><i class="bi bi-arrow-clockwise"></i></a>
+                        <a href="{% url 'youtube:refresh_get_link' file.video_id %}" class="btn btn-outline-dark rounded-0" disabled><i
+                                class="bi bi-arrow-clockwise"></i></a>
                     </td>
                 </tr>
                 {% endif %}
                 {% if file.audio_is_downloaded %}
                 <tr>
                     <td class="text-center align-middle"><i class="bi bi-file-music fw-bolder"></i></td>
-                    <td class="text-center align-middle"><img src="{{file.video_thumb_url}}" alt="" width=96 class="rounded"></td>
+                    <td class="text-center align-middle"><img src="{{file.video_thumb_url}}" alt="" width=96
+                            class="rounded"></td>
                     <td class="text-center align-middle">{{file.video_title}}</td>
                     <td class="text-center align-middle">{{file.audio_downloaded_format}}</td>
                     <td class="text-center align-middle">----</td>
@@ -77,7 +82,9 @@
                             href="{% url 'accounts:download_file' file.video_id file.audio_downloaded_format %}">
                             <i class="bi bi-cloud-download"></i>
                         </a>
-                        <a class="btn btn-outline-dark rounded-0 shadow" href="#"><i class="bi bi-arrow-clockwise" disabled></i></a>
+                        <a class="btn btn-outline-dark rounded-0 shadow"
+                            href="{% url 'youtube:refresh_get_link' file.video_id %}"><i class="bi bi-arrow-clockwise"
+                                disabled></i></a>
                     </td>
                 </tr>
                 {% endif %}

@@ -11,6 +11,8 @@ urlpatterns = [
     path('youtube/', include('youtube.urls', namespace='youtube')),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('celery-progress/', include('celery_progress.urls')),
+    # path('api-auth/', include('rest_framework.urls')),
+    # path('api/', include('youtube_api.urls')),
 ]
 
 if settings.DEBUG:

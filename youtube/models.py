@@ -31,8 +31,3 @@ class VideoInfo(models.Model):
 
     def __str__(self):
         return f"{self.video_title} - {self.video_id}"
-
-# class VideoPlaylist(models.Model):
-#     user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
-#     video_url = models.CharField(max_length=100, blank=True, null=True)
-#     playlist_id = models.CharField(max_length=100, blank=True, null=True)

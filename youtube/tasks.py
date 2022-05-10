@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.conf import settings
 import redis
 import ffmpeg
+import json
 
 
 redis_instance = redis.StrictRedis(
@@ -63,21 +64,9 @@ def extract_video_info(url_key):
 
                 formats = single_video.get("formats", [single_video])
                 for f_note in single_video["formats"]:
-                    
                     if f_note["format_note"] == "medium":
                         audio_url = f_note["url"]
-                        # if not os.path.exists(videofile_path + f'/{single_video["id"]}'):
-                        #     if use_proxy:
-                        #         ydl_opts = {
-                        #             "proxy": "socks5://127.0.0.1:7890",
-                        #             "outtmpl": videofile_path + f'/{single_video["id"]}.mp3',
-                        #         }
-                        #     else:
-                        #         ydl_opts = {
-                        #             "outtmpl": videofile_path + f'/{single_video["id"]}.mp3',
-                        #         }
-                        #     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                        #         ydl.extract_info(audio_url)
+
                 # get all resolution of mp4 format
                 list_format = []
                 for f in formats:
@@ -118,9 +107,9 @@ def extract_video_info(url_key):
     elif "?v=" in url and "&list=" not in url:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             video_info = ydl.extract_info(url, download=False)
-            # f = open('info_singlevideo.json', 'a+')
-            # json.dump(video_info, f)
-            # f.close()
+            f = open('info_singlevideo.json', 'a+')
+            json.dump(video_info, f)
+            f.close()
             redis_instance.hmset(url_key, {"video_id": video_info["id"]})
             base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/media/'+f'{user_email}/'
             video_id_path = f'{video_info["id"]}/'
@@ -179,19 +168,30 @@ def extract_video_info(url_key):
 # Start single video downloading process
 ##
 
-def ffmpeg_concat(format_note, video_id, user_email):
+def ffmpeg_concat(format_id, format_note, video_id, user_email):
+    # print(with_audio)
+    url = f"https://www.youtube.com/watch\?v\={video_id}"
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    noaudio_filename = f"n{video_id}-{format_note}.mp4"
-    noaudio_filepath = base_dir + f"/media/{user_email}/{video_id}/" + noaudio_filename
-    audio_path = base_dir + f"/media/{user_email}/{video_id}/" + f"{video_id}.mp3"
-    ffmpeg_input_video = ffmpeg.input(noaudio_filepath)
-    ffmpeg_input_audio = ffmpeg.input(audio_path)
-    ffmpeg.concat(ffmpeg_input_video, ffmpeg_input_audio, v=1, a=1).output(
-                base_dir + f"/media/{user_email}/{video_id}/{video_id}-{format_note}.mp4").run(overwrite_output=True)
-    after_concat_filename = f"{video_id}-{format_note}.mp4"
-    after_concat_filepath = base_dir + f"/media/{user_email}/{video_id}/" + after_concat_filename
-    os.remove(noaudio_filepath)
-    return after_concat_filepath
+    filename = f"{video_id}-{format_note}.mp4"
+    filepath = base_dir + f"/media/{user_email}/{video_id}/"
+    os.system(f"yt-dlp --proxy socks5://127.0.0.1:7890 -f '{format_id}[ext=mp4]+bestaudio[ext=m4a]/mp4' {url} -o '{filepath}/{filename}' ")
+    # if with_audio == False:
+    #     os.system(f"yt-dlp --proxy socks5://127.0.0.1:7890 -f '{format_id}[ext=mp4]+bestaudio[ext=m4a]/mp4' {url} -o '{filepath}/{filename}' ")
+    # else:
+    #     os.system(f"yt-dlp --proxy socks5://127.0.0.1:7890 -f '{format_id}[ext=mp4]/mp4' {url} -o '{filepath}/{filename}' ")
+    # noaudio_filename = f"n{video_id}-{format_note}.mp4"
+    # noaudio_filepath = base_dir + f"/media/{user_email}/{video_id}/" + noaudio_filename
+    # audio_path = base_dir + f"/media/{user_email}/{video_id}/" + f"{video_id}.mp3"
+    # ffmpeg_input_video = ffmpeg.input(noaudio_filepath)
+    # ffmpeg_input_audio = ffmpeg.input(audio_path)
+    # ffmpeg.concat(ffmpeg_input_video, ffmpeg_input_audio, v=1, a=1).output(
+    #             base_dir + f"/media/{user_email}/{video_id}/{video_id}-{format_note}.mp4", c='copy').run(overwrite_output=True)
+    # after_concat_filename = f"{video_id}-{format_note}.mp4"
+    # after_concat_filepath = base_dir + f"/media/{user_email}/{video_id}/" + after_concat_filename
+    # os.remove(noaudio_filepath)
+    final_file_path = filepath + filename
+    # return after_concat_filepath
+    return final_file_path
 
 
 def dl_audio(url, user_email, video_id):
@@ -228,7 +228,7 @@ def dl_audio(url, user_email, video_id):
 
 
 @shared_task(bind=True)
-def download_video(self, url_key, format_id):
+def download_video(self, url_key, format_id, format_note):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     url = str(redis_instance.hgetall(url_key)["url"])
     video_id = redis_instance.hgetall(url_key)["video_id"]
@@ -238,45 +238,72 @@ def download_video(self, url_key, format_id):
         current_file_path = VideoInfo.objects.get(video_id=video_id).video_dl_link
         if os.path.exists(current_file_path):
             os.remove(current_file_path)
-
-    def finished_hook(d):
-        # f = open('info_singlevideo_d.json', 'a+')
-        # json.dump(d, f)
-        # f.close()
-        if d["status"] == "finished":
-            format_note = d["info_dict"]["format_note"]
-            if format_id in ["160", "133", "18", "135", "22", "137", "271", "313",] and d["info_dict"]["asr"] is None:
-                dl_audio(url, user_email, video_id)
-                video_dl_link = ffmpeg_concat(format_note, video_id, user_email)
-            else:
-                video_dl_link = base_dir + f"/media/{user_email}/{video_id}/n{video_id}-{format_note}.mp4"
-                
-            video_file_name = f"{video_id}-{format_note}.mp4"
-            VideoInfo.objects.filter(video_id=video_id).update(
-                video_dl_link=video_dl_link,
-                video_file_name=video_file_name,
-                video_downloaded_extension="mp4",
-                video_downloaded_resolution=format_note,
-                video_expiration_time_at=datetime.now() + timedelta(hours=24),
-                video_is_downloaded=True,
-            )
-    if use_proxy:
-        ydl_opts = {
-            "proxy": "socks5://127.0.0.1:7890",
-            "outtmpl": save_path + "n%(id)s-%(format_note)s.%(ext)s",
-            "format": format_id,
-            "progress_hooks": [finished_hook],
-        }
-    else:
-        ydl_opts = {
-            "outtmpl": save_path + "n%(id)s-%(format_note)s.%(ext)s",
-            "format": format_id,
-            "progress_hooks": [finished_hook],
-        }
-    url = redis_instance.hgetall(url_key)["url"]
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.extract_info(url)
+    video_dl_link = ffmpeg_concat(format_id, format_note, video_id, user_email)
+    video_file_name = f"{video_id}-{format_note}.mp4"
+    VideoInfo.objects.filter(video_id=video_id).update(
+        video_dl_link=video_dl_link,
+        video_file_name=video_file_name,
+        video_downloaded_extension="mp4",
+        video_downloaded_resolution=format_note,
+        video_expiration_time_at=datetime.now() + timedelta(hours=24),
+        video_is_downloaded=True,
+    )
     return "downloaded"
+
+
+# @shared_task(bind=True)
+# def download_video(self, url_key, format_id):
+#     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+#     url = str(redis_instance.hgetall(url_key)["url"])
+#     video_id = redis_instance.hgetall(url_key)["video_id"]
+#     user_email = redis_instance.hgetall(url_key)["user_email"]
+#     save_path = f"./media/{user_email}/{video_id}/"
+#     if VideoInfo.objects.get(video_id=video_id).video_dl_link is not None:
+#         current_file_path = VideoInfo.objects.get(video_id=video_id).video_dl_link
+#         if os.path.exists(current_file_path):
+#             os.remove(current_file_path)
+
+#     def finished_hook(d):
+#         with_audio = bool
+#         # f = open('info_singlevideo_d.json', 'a+')
+#         # json.dump(d, f)
+#         # f.close()
+#         if d["status"] == "finished":
+#             format_note = d["info_dict"]["format_note"]
+#             if format_id in ["160", "133", "18", "135", "22", "137", "271", "313",] and d["info_dict"]["asr"] is None:
+#                 # dl_audio(url, user_email, video_id)
+#                 video_dl_link = ffmpeg_concat(format_id, format_note, video_id, user_email, with_audio = False)
+#             else:
+#                 video_dl_link = ffmpeg_concat(format_id, format_note, video_id, user_email, with_audio = True)
+#                 # video_dl_link = base_dir + f"/media/{user_email}/{video_id}/n{video_id}-{format_note}.mp4"
+#             video_file_name = f"{video_id}-{format_note}.mp4"
+#             VideoInfo.objects.filter(video_id=video_id).update(
+#                 video_dl_link=video_dl_link,
+#                 video_file_name=video_file_name,
+#                 video_downloaded_extension="mp4",
+#                 video_downloaded_resolution=format_note,
+#                 video_expiration_time_at=datetime.now() + timedelta(hours=24),
+#                 video_is_downloaded=True,
+#             )
+#     if use_proxy:
+#         ydl_opts = {
+#             "proxy": "socks5://127.0.0.1:7890",
+#             "outtmpl": save_path + "n%(id)s-%(format_note)s.%(ext)s",
+#             "format": format_id,
+#             "progress_hooks": [finished_hook],
+#         }
+#     else:
+#         ydl_opts = {
+#             "outtmpl": save_path + "n%(id)s-%(format_note)s.%(ext)s",
+#             "format": format_id,
+#             "progress_hooks": [finished_hook],
+#         }
+#     url = redis_instance.hgetall(url_key)["url"]
+#     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+#         # ffmpeg_concat(format_id, format_note, video_id, user_email, with_audio = False)
+#         info = ydl.extract_info(url, download=False)
+#         print(info["formats"][""])
+#     return "downloaded"
 
 ##
 # End single video downloading process

@@ -7,9 +7,9 @@
 <!-- check if link that send to this page is single video -->
 <div class="row mb-1 col-sm-12 col-md-9 col-lg-7 col-xl-10 mx-auto">
     <h1 class='text-center align-middle'><i class="bi bi-youtube"></i> Youtube Downloader</h1>
-    {% comment %} <h6 class='text-center align-middle'><i class="bi bi-info-square-fill"></i> click on "Get Download
+    <!-- <h6 class='text-center align-middle'><i class="bi bi-info-square-fill"></i> click on "Get Download
         Link" to add
-        video file in your account and then you can download it very easily from Pandadl servers</h6> {% endcomment %}
+        video file in your account and then you can download it very easily from Pandadl servers</h6> -->
 
 </div>
 {% if video_info %}
@@ -119,10 +119,10 @@
     class="card col-sm-12 col-md-9 col-lg-7 col-xl-10 mx-auto border-0 rounded-0 shadow rounded mt-1 rounded-0 mb-4 p-4">
     <input type="hidden" value="{{url_key}}" id="url-key">
     <div class="row align-items-center">
-        <div class="col-8 align-middle" id='fileadd_count'>0 Video file added</div>
-        <div class="col-4"><button class="btn btn-outline-dark rounded-0 shadow float-end"
-                onclick="SendForDownload()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                    fill="currentColor" class="bi bi-send-plus" viewBox="0 0 16 16">
+        <div class="col-8 align-middle" id='fileadd_count'><span id="video-count">0</span> Video file added</div>
+        <div class="col-4"><button class="btn btn-outline-dark rounded-0 float-end" onclick="SendForDownload()"><svg
+                    xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-send-plus" viewBox="0 0 16 16">
                     <path
                         d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855a.75.75 0 0 0-.124 1.329l4.995 3.178 1.531 2.406a.5.5 0 0 0 .844-.536L6.637 10.07l7.494-7.494-1.895 4.738a.5.5 0 1 0 .928.372l2.8-7Zm-2.54 1.183L5.93 9.363 1.591 6.602l11.833-4.733Z" />
                     <path
@@ -134,11 +134,11 @@
     {% for video in videos_info %}
     <div class="row align-items-center">
         <div class="col-8">{{forloop.counter}} - <img src="{{ video.video_thumb_url }}" class="rounded-0"
-                style="width:90px" alt="{{ video_info.video_title }}"> {{video.video_title}}
+                style="width:90px" alt="{{ video_info.video_title }}"> {{video.video_id}}
         </div>
         <div class="col-4">
-            <select class="form-select rounded-0" aria-label="Default select" onchange="AddCookie(this)">
-                <option selected>Select a quality</option>
+            <select class="form-select rounded-0 choose_q" aria-label="Default select" onchange="AddCookie(this)">
+                <option selected id="default-selected" data-videoid="{{video.video_id}}" onclick="DecreaseCount()">Please select a quality</option>
                 {% for video_detail in video.video_formats %}
                 <option value="{{video_detail.0}}-{{video_detail.1}}" data-video-id="{{video.video_id}}"
                     data-format-id="{{video_detail.0}}" data-format-note="{{video_detail.1}}">{{ video_detail.1 }} - MP4
@@ -159,25 +159,35 @@
 {% block script %}
 <script>
     let url_key = document.getElementById("url-key").value
+    let select_dropdown = document.getElementById('choose_q')
     window.onload = function () {
+        $('.choose_q').prop('selectedIndex', 0);
         let all_cookie = document.cookie.split(';')
         all_cookie.forEach(function (single_cookie) {
-            if (single_cookie.startsWith('csrftoken')){
-                // console.log(single_cookie)
-            }
-            else{
+            if (single_cookie.startsWith('csrftoken')) {
+                return;
+            } else {
                 delete_cookie(single_cookie)
             }
         })
     }
-    function CookieCount(){
+    let video_counter = document.getElementById("video-count")
+    let cookie_arr = new Array();
+
+    function CookieCount(selectObject) {
         var theCookies = document.cookie.split(';');
-        var aString = '';
-        for (var i = 1 ; i <= theCookies.length; i++) {
-            aString += i + ' ' + theCookies[i-1] + "\n";
-        }
-        console.log(aString)
-        
+        cookie_arr = []
+        theCookies.forEach(cookie => {
+            if (cookie.includes('csrftoken') || cookie.includes('undefined')) {
+                return;
+            } else {
+                cookie_arr.push(cookie)
+            }
+        });
+        video_counter.innerHTML = cookie_arr.length
+    }
+    function DecreaseCount(){
+       return;
     }
     function AddCookie(selectObject) {
         let video_id = $("option:selected", selectObject).attr("data-video-id")
@@ -185,7 +195,7 @@
         let video_format_note = $("option:selected", selectObject).attr("data-format-note")
         document.cookie = `${url_key}(${video_id})` +
             `={"video_id":"${video_id}","video_format_id":"${video_format_id}","video_format_note":"${video_format_note}"};path=/`;
-        CookieCount()
+        CookieCount(selectObject)
     }
 
     function delete_cookie(name) {
@@ -210,7 +220,6 @@
             }
 
         });
-        console.log(new_value)
         document.cookie = `${url_key}=${new_value};path=/`
         window.location.replace("http://127.0.0.1:8000/youtube/" + url_key + "/dl-playlist-video/");
     }

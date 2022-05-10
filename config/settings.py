@@ -11,6 +11,8 @@ ALLOWED_HOSTS = []
 # Application definition
 INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
+    "youtube.apps.YoutubeConfig",
+    # "youtube_api.apps.YoutubeApiConfig",
     "home.apps.HomeConfig",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -18,9 +20,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "youtube.apps.YoutubeConfig",
     'celery_progress',
     'django_celery_beat',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
