@@ -45,10 +45,10 @@
 
                 {% for audio in audio_list %}
                 <tr>
-                    <td class="text-center align-middle"><img src="{{audio.video_thumb_url}}" alt="" width=128
-                            class="rounded"></td>
+                    <td class="text-center align-middle"><img src="{{audio.video_thumb_url}}" alt="" width=96
+                            class="rounded-0 rounded"></td>
                     <td class="text-center align-middle">{{audio.video_title}}</td>
-                    <td class="text-center align-middle"></td>
+                    <td class="text-center align-middle">{{audio.audio_bitrate}}kbps</td>
                     <td class="text-center align-middle">{{audio.audio_downloaded_format}}</td>
                     <td class="text-center align-middle">{{audio.audio_remaining_time_url}}</td>
                     <td class="text-center align-middle">

@@ -14,10 +14,11 @@ import ffmpeg
 import json
 
 
+
 redis_instance = redis.StrictRedis(
     host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0, charset="utf-8", decode_responses=True,)
 
-use_proxy = False
+use_proxy = True
 
 @shared_task()
 def extract_video_info(url_key):
@@ -165,44 +166,14 @@ def extract_video_info(url_key):
 def ffmpeg_concat(format_id, format_note, video_id, user_email):
     url = f"https://www.youtube.com/watch\?v\={video_id}"
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    filename = f"{video_id}-{format_note}.mp4"
+    filename = f"{video_id}-({format_note}).mp4"
     filepath = base_dir + f"/media/{user_email}/{video_id}/"
-    os.system(f"yt-dlp --proxy socks5://127.0.0.1:7890 -f '{format_id}[ext=mp4]+bestaudio[ext=m4a]/mp4' {url} -o '{filepath}/{filename}' ")
+    if use_proxy:
+        os.system(f"yt-dlp --proxy socks5://127.0.0.1:7890 -f '{format_id}[ext=mp4]+bestaudio[ext=m4a]/mp4' {url} -o '{filepath}/{filename}' ")
+    else:
+        os.system(f"yt-dlp -f '{format_id}[ext=mp4]+bestaudio[ext=m4a]/mp4' {url} -o '{filepath}/{filename}' ")
     final_file_path = filepath + filename
     return final_file_path
-
-
-def dl_audio(url, user_email, video_id):
-    base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/media/'+f'{user_email}/'
-    video_id_path = f'{video_id}/'
-    single_video_dir = base_path+video_id_path
-    if use_proxy:
-        ydl_opts = {
-            "proxy": "socks5://127.0.0.1:7890",
-            "outtmpl": single_video_dir + f'{video_id}.mp3',
-            "format": "bestaudio/best",
-            "postprocessors": [
-                {
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "128",
-                }
-            ],
-        }
-    else:
-        ydl_opts = {
-            "outtmpl": single_video_dir + f'{video_id}.mp3',
-            "format": "bestaudio/best",
-            "postprocessors": [
-                {
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "128",
-                }
-            ],
-        }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.extract_info(url)
 
 
 @shared_task(bind=True)
@@ -237,8 +208,9 @@ def download_video(self, url_key, format_id, format_note):
 # Start audio downloading process
 ##
 @shared_task(bind=True)
-def download_audio(self, url_key, ext, quality):
+def download_audio(self, url_key, ext, bitrate):
     video_id = redis_instance.hgetall(url_key)["video_id"]
+    url = f"https://www.youtube.com/watch\?v\={video_id}"
     user_email = redis_instance.hgetall(url_key)["user_email"]
     save_path = f"./media/{user_email}/{video_id}/"
     if VideoInfo.objects.get(video_id=video_id).audio_dl_link is not None:
@@ -246,60 +218,30 @@ def download_audio(self, url_key, ext, quality):
             video_id=video_id).audio_dl_link
         if os.path.exists(current_file_path):
             os.remove(current_file_path)
-
-    def finished_hook(d):
-        if d['status'] == 'finished':
-            base_dir = os.path.dirname(
-                os.path.dirname(os.path.abspath(__file__)))
-            filename = video_id + "-" + quality + "." + ext
-            filepath = base_dir + f"/media/{user_email}/{video_id}/" + filename
-            VideoInfo.objects.filter(video_id=video_id).update(
-                audio_dl_link=filepath,
-                audio_file_name=filename,
-                audio_downloaded_format=ext,
-                audio_expiration_time_at=datetime.now() + timedelta(hours=24),
-                audio_is_downloaded=True,
-            )
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    filename = f'{video_id}-({bitrate}kbps)'
+    filepath = base_dir + f"/media/{user_email}/{video_id}/"
     if use_proxy:
-        ydl_opts = {
-            "proxy": "socks5://127.0.0.1:7890",
-            "outtmpl": save_path + "%(id)s-" + quality + ".%(ext)s",
-            "format": "22",
-            "progress_hooks": [finished_hook],
-            "postprocessors": [
-                {
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": ext,
-                    "preferredquality": quality,
-                }
-            ],
-        }
+        os.system(f"yt-dlp --proxy socks5://127.0.0.1:7890 -f 'bestaudio[ext=m4a]/mp3' --audio-quality {bitrate} {url} -o '{filepath}/{filename}.{ext}'")
     else:
-        ydl_opts = {
-            "outtmpl": save_path + "%(id)s-" + quality + ".%(ext)s",
-            "format": "bestaudio/best",
-            "progress_hooks": [finished_hook],
-            "postprocessors": [
-                {
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": ext,
-                    "preferredquality": quality,
-                }
-            ],
-        }
-    url = redis_instance.hgetall(url_key)["url"]
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.extract_info(url)
+        os.system(f"yt-dlp -f 'bestaudio[ext=m4a]/mp3' --audio-quality {bitrate} {url} -o '{filepath}/{filename}.{ext}'")
+    VideoInfo.objects.filter(video_id=video_id).update(
+        audio_dl_link = f'{filepath}{filename}.mp3',
+        audio_file_name = filename,
+        audio_downloaded_format = ext,
+        audio_bitrate = bitrate,
+        audio_expiration_time_at = datetime.now() + timedelta(hours=24),
+        audio_is_downloaded = True,
+    )
     return "finished"
 ##
 # End audio downloading process
 ##
 
+
 ##
 # Start playlist downloading process
 ##
-
-
 @shared_task(bind=True)
 def download_playlist_video_files(self, url_key, playlist_videos_info):
     playlist_id = redis_instance.hgetall(url_key)["playlist_id"]
@@ -315,7 +257,7 @@ def download_playlist_video_files(self, url_key, playlist_videos_info):
             if os.path.exists(current_file_path):
                 os.remove(current_file_path)
         video_dl_link = ffmpeg_concat(format_id, format_note, video_id, user_email)
-        video_file_name = f"{video_id}-{format_note}.mp4"
+        video_file_name = f"{video_id}-({format_note}).mp4"
         VideoInfo.objects.filter(video_id=video_id).update(
             video_dl_link=video_dl_link,
             video_file_name=video_file_name,

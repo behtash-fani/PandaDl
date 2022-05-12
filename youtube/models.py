@@ -25,6 +25,7 @@ class VideoInfo(models.Model):
     audio_dl_link = models.CharField(max_length=200, blank=True, null=True)
     audio_file_name = models.CharField(max_length=200, blank=True, null=True)
     audio_downloaded_format = models.CharField(max_length=200, blank=True, null=True)
+    audio_bitrate = models.CharField(max_length=20, blank=True, null=True)
     audio_expiration_time_at = models.DateTimeField(blank=True, null=True)
     audio_remaining_time_url = models.CharField(max_length=20, blank=True, null=True)
     audio_is_downloaded = models.BooleanField(default=False)

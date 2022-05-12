@@ -80,7 +80,7 @@
                                 <td class="align-middle">MP3</td>
                                 <td>128 kbps</td>
                                 <td>
-                                    <a href="{% url 'youtube:download_audio_progress' ext="mp3" quality="128" url_key=url_key %}"
+                                    <a href="{% url 'youtube:download_audio_progress' ext="mp3" bitrate="128" url_key=url_key %}"
                                         class="btn btn-outline-dark rounded-0 shadow"><i
                                             class="bi bi-box-arrow-down"></i> Get Download Link</a>
                                 </td>
@@ -90,7 +90,7 @@
                                 <td>MP3</td>
                                 <td>192 kbps</td>
                                 <td>
-                                    <a href="{% url 'youtube:download_audio_progress' ext="mp3" quality="192" url_key=url_key %}"
+                                    <a href="{% url 'youtube:download_audio_progress' ext="mp3" bitrate="192" url_key=url_key %}"
                                         class="btn btn-outline-dark rounded-0 shadow"><i
                                             class="bi bi-box-arrow-down"></i>Get Download Link</a>
                                 </td>
@@ -99,7 +99,7 @@
                                 <th scope="row">3</th>
                                 <td>MP3</td>
                                 <td>320 kbps</td>
-                                <td><a href="{% url 'youtube:download_audio_progress' ext="mp3" quality="320" url_key=url_key %}"
+                                <td><a href="{% url 'youtube:download_audio_progress' ext="mp3" bitrate="320" url_key=url_key %}"
                                         class="btn btn-outline-dark rounded-0 shadow"><i
                                             class="bi bi-box-arrow-down"></i>Get Download Link</a>
                                 </td>
@@ -134,7 +134,7 @@
     {% for video in videos_info %}
     <div class="row align-items-center">
         <div class="col-8">{{forloop.counter}} - <img src="{{ video.video_thumb_url }}" class="rounded-0"
-                style="width:90px" alt="{{ video_info.video_title }}"> {{video.video_id}}
+                style="width:90px" alt="{{ video_info.video_title }}"> {{video.video_title}}
         </div>
         <div class="col-4">
             <select class="form-select rounded-0 choose_q" aria-label="Default select" onchange="AddCookie(this)">
@@ -221,7 +221,7 @@
 
         });
         document.cookie = `${url_key}=${new_value};path=/`
-        window.location.replace("http://127.0.0.1:8000/youtube/" + url_key + "/dl-playlist-video/");
+        window.location.replace("http://" + window.location.hostname + ":8000/youtube/" + url_key + "/dl-playlist-video/");
     }
 </script>
 {% endblock script %}

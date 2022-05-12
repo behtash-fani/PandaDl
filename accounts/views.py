@@ -217,7 +217,6 @@ def change_password(request, uidb64, token):
                 return redirect('accounts:user_login')
         else:
             send_passwords_form = GetRestPasswordForm()
-        
         context = {'send_passwords_form': send_passwords_form}
         return render(request, 'accounts/registration/forget_password/change_password_form.html', context)
             # if send_passwords_form.is_valid():
@@ -229,7 +228,6 @@ def change_password(request, uidb64, token):
     #     return redirect("home:index")
     # else:
     #     return render(request, "accounts/registration/activation_failed.html")
-    
 
 
 # def forgot_password(request):
@@ -297,7 +295,8 @@ def downloads_audios(request):
     videoinfo = VideoInfo.objects.filter(user=request.user, audio_is_downloaded=True)
     for audio in videoinfo:
         if audio.audio_dl_link:
-            audio_file_path = audio.audio_dl_link
+            audio_file_path = f'{audio.audio_dl_link}'
+            print(audio_file_path)
             if os.path.exists(audio_file_path):
                 audio_list.append(audio)
             else:
@@ -336,10 +335,10 @@ def download_file(request, video_id, ext):
     file_name = ""
     if ext == "mp4":
         file_link = video_info.video_dl_link
-        file_name = video_info.video_file_name
+        file_name = f'{video_id}-({video_info.video_downloaded_resolution}).mp4'
     elif ext == "mp3":
         file_link = video_info.audio_dl_link
-        file_name = video_info.audio_file_name
+        file_name = f'{video_info.video_id}.mp3'
     response = StreamingHttpResponse(
         FileWrapper(open(file_link, "rb")),
         content_type="mimetypes.guess_type(file_link)[0]",
@@ -347,6 +346,5 @@ def download_file(request, video_id, ext):
     response["Content-Length"] = os.path.getsize(file_link)
     response["Content-Disposition"] = "Attachment;filename=%s" % file_name
     return response
-
 
 ## end views of download file

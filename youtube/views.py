@@ -111,10 +111,10 @@ def download_video_progress(request, format_id, format_note, url_key):
     return render(request, "youtube/progress_download_file.html", context)
 
 
-def download_audio_progress(request, ext, quality, url_key):
+def download_audio_progress(request, ext, bitrate, url_key):
     video_id = redis_instance.hgetall(url_key)["video_id"]
     video_info = VideoInfo.objects.get(video_id=video_id)
-    download_audio_result = download_audio.delay(url_key, ext, quality)
+    download_audio_result = download_audio.delay(url_key, ext, bitrate)
     task_id = download_audio_result.task_id
     redis_instance.hmset(url_key, {"dl_task_id": task_id})
     redis_instance.hmset(url_key, {"file_type": "audio"})
